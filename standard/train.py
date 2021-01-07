@@ -1,4 +1,5 @@
 import os
+import chainer
 from chainer import optimizers
 from chainer.training import Trainer, extensions
 from chainer.iterators import MultithreadIterator
@@ -15,6 +16,10 @@ ksize = 3
 device = 0
 patch = 64
 out = "result"
+
+chainer.global_config.train = True
+chainer.global_config.autotune = True
+chainer.global_config.cudnn_deterministic = False
 
 os.makedirs(out, exist_ok=True)
 

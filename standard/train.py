@@ -9,10 +9,11 @@ from network import Network
 
 batch = 16
 epoch = 1000
-channels = 512
+channels = 64
 blocks = 8
 ksize = 3
 device = 0
+patch = 64
 out = "result"
 
 os.makedirs(out, exist_ok=True)
@@ -25,7 +26,7 @@ v_iter = MultithreadIterator(validation, batch_size=batch, repeat=True, shuffle=
 model = Network(channels, blocks, ksize)
 if device >= 0: model.to_gpu()
 optimizer = optimizers.Adam().setup(model)
-updater = CustomUpdater({"main": t_iter, "test": v_iter}, optimizer, (128, 128))
+updater = CustomUpdater({"main": t_iter, "test": v_iter}, optimizer, (patch, patch))
 
 trainer = Trainer(updater, (epoch, "epoch"), out=out)
 log = extensions.LogReport()

@@ -13,9 +13,9 @@ ksize = 3
 device = 0
 patch = 256
 
-chainer.global_config.train = True
+chainer.global_config.train = False
 chainer.global_config.autotune = True
-chainer.global_config.cudnn_deterministic = False
+chainer.global_config.cudnn_deterministic = True
 
 model = Network(channels, blocks, ksize)
 serializers.load_hdf5(sys.argv[1], model)

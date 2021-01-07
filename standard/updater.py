@@ -46,4 +46,4 @@ class CustomUpdater(StandardUpdater):
 		h_, w_ = (h1 - h) // 2, (w1 - w) // 2
 		y = Variable(model.xp.array([c[1][:,h_:-h_,w_:-w_] for c in crop], dtype="float32"))
 		loss = mean_squared_error(p, y) / b
-		report({"loss": loss})
+		report({"test": loss})

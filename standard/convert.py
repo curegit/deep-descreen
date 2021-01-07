@@ -36,9 +36,9 @@ for x in range(0, w, stride):
 		i = min(w - patch, x)
 		j = min(h - patch, y)
 		x1, y1, x2, y2 = (i, j, i + patch, j + patch)
-		x = img1[:,y1:y2,x1:x2].reshape((1, 3, patch, patch))
+		im = img1[:,y1:y2,x1:x2].reshape((1, 3, patch, patch))
 		print(f"{i}/{w} - {j}/{h}")
-		v = Variable(model.xp.array(x))
+		v = Variable(model.xp.array(im))
 		t = model(v)[0]
 		t.to_cpu()
 		out[:,y1:y1+stride,x1:x1+stride] = t.data[0]

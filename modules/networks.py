@@ -1,13 +1,9 @@
 from chainer import Chain
 from chainer.links import Convolution2D, Deconvolution2D, PReLU
-
-
 from chainer.functions import mean_squared_error
 
-# 
 class RgbNet(Chain):
 
-	# ネットワークを定義する
 	def __init__(self):
 		super().__init__()
 		with self.init_scope():
@@ -23,7 +19,6 @@ class RgbNet(Chain):
 			self.a5 = PReLU()
 			self.d6 = Deconvolution2D(64, 3, ksize=9, stride=3, pad=4) #->64
 
-	# 順伝播を返す
 	def __call__(self, x):
 		h1 = self.a1(self.c1(x))
 		h2 = self.a2(self.c2(h1))
@@ -35,10 +30,8 @@ class RgbNet(Chain):
 	def loss(self, x, y):
 		return mean_squared_error(self(x), y)
 
-# 
 class CmykNet(Chain):
 
-	# ネットワークを定義する
 	def __init__(self):
 		super().__init__()
 		with self.init_scope():
@@ -54,7 +47,6 @@ class CmykNet(Chain):
 			self.a5 = PReLU()
 			self.d6 = Deconvolution2D(64, 4, ksize=9, stride=3, pad=4) #->64
 
-	# 順伝播を返す
 	def __call__(self, x):
 		h1 = self.a1(self.c1(x))
 		h2 = self.a2(self.c2(h1))

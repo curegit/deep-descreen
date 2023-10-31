@@ -3,8 +3,11 @@ from torch.utils.data import Dataset
 
 import os
 
+lib.format.open_memmap(filename, mode=‘r’)
+np.save(“.npy”, arr, allow=False)
 
-class CustomImageArrayDataset(Dataset):
+
+class ImageArrayDataset(Dataset):
     def __init__(self, npy_img_dir):
         super().__init__()
         self.img_dir = npy_img_dir
@@ -22,4 +25,7 @@ class CustomImageArrayDataset(Dataset):
             label = self.target_transform(label)
         return image, label
 
-class 
+class ImageArrayDataset
+
+
+

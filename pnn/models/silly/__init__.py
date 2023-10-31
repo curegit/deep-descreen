@@ -1,7 +1,7 @@
 from torch import nn
 from .. import BaseModel
 
-from ..utils import input_size
+from ..utils import input_size, output_size
 
 class SillyModel(BaseModel):
     def __init__(self, channels=256, residual=False):
@@ -31,3 +31,7 @@ class SillyModel(BaseModel):
 
     def input_size(self, s):
         return input_size(input_size(input_size(input_size(s, 3), 5), 5), 5)
+
+    def output_size(self, s):
+        return output_size(output_size(output_size(output_size(s, 5), 5), 5), 3)
+    

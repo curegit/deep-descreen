@@ -57,3 +57,5 @@ def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
         train_loop(train_dataloader, model, loss_fn, optimizer)
         test_loop(test_dataloader, model, loss_fn)
     print("Done!")
+
+    

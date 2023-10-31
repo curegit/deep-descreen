@@ -36,5 +36,7 @@ def main():
 
 
 
-    train(model, training_data, test_data, 2, 2)
+    train(model, training_data, test_data, 200, 2)
+    
+    torch.save(model.state_dict(), 'model_weights.pth')
 

@@ -9,7 +9,7 @@ class BaseModel(ABC, Module):
     @abstractmethod
     def forward(self, x):
         raise NotImplementedError()
-    
+
     @abstractmethod
     def output_size(self, input_size):
         raise NotImplementedError()
@@ -32,6 +32,8 @@ class BaseModel(ABC, Module):
             for w_start, w_stop in range_chunks(width, patch_size):
                 h_pad = self.required_padding(h_stop - h_start)
                 w_pad = self.required_padding(w_stop - w_start)
-                h_slice = slice(h_start - h_pad, h_stop + h_pad)
-                w_slice = slice(w_start - w_pad, w_stop + w_pad)
-                yield h_slice, w_slice
+                h_s = slice(h_start, h_stop)
+                w_s = slice(w_start, w_stop)
+                h_slice = slice(h_start - h_pad + h_pad, h_stop + h_pad * 2)
+                w_slice = slice(w_start - w_pad + h_pad, w_stop + w_pad * 2)
+                yield (h_slice, w_slice), (h_s, w_s)

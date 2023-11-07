@@ -1,7 +1,7 @@
 import os
 import os.path
-import glob
 import pathlib
+import glob
 import random
 import torch
 from torch.utils.data import Dataset
@@ -34,10 +34,11 @@ class CustomImageArrayDataset(Dataset):
 
 
 class CustomImageTensorDataset(Dataset):
-    def __init__(self, array_dataset, reduced_padding):
+    def __init__(self, array_dataset, reduced_padding, device):
         super().__init__()
         self.base_dataset = array_dataset
         self.unpad = reduced_padding
+        self.device = device
 
     def __len__(self):
         return len(self.base_dataset)
@@ -47,4 +48,6 @@ class CustomImageTensorDataset(Dataset):
         X = torch.from_numpy((x / (2 ** 16 - 1)).astype(float32))
         Y = torch.from_numpy((y / (2 ** 16 - 1)).astype(float32))
         Y = Y[:, self.unpad:-self.unpad, self.unpad:-self.unpad]
+        X = X.to(self.device)
+        Y = Y.to(self.device)
         return X, Y

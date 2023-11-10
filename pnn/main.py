@@ -1,12 +1,7 @@
 import torch
-from .training import train
+from torch import nn
+from .training import train_loop, test_loop
 from .dataset import CustomImageArrayDataset, CustomImageTensorDataset
-
-
-def cmain():
-    out_size = 512
-    p = model.required_padding(out_size)
-
 
 
 def main():
@@ -40,3 +35,18 @@ def main():
     
     torch.save(model.state_dict(), 'model_weights.pth')
 
+
+def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
+    from torch.utils.data import DataLoader
+    train_dataloader = DataLoader(training_data, batch_size=batch_size)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size)
+
+    loss_fn = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    for t in range(epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+        train_loop(train_dataloader, model, loss_fn, optimizer)
+        test_loop(test_dataloader, model, loss_fn)
+    print("Done!")
+
+    

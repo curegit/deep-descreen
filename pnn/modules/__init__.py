@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from torch.nn import Module
+from .conv import Conv
 
-
-class BaseModel(ABC, Module):
+class CNNModule(ABC, Module):
 
     @abstractmethod
     def forward(self, x):

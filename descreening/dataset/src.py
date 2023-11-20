@@ -8,13 +8,22 @@ from torch.utils.data import Dataset
 from numpy import array, uint16, float32
 from numpy.lib.format import open_memmap
 
+import cv2
+import numpy as np
+
+def read_image(src):
+    x = cv2.imread(src, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    x = x[:, :, [2, 1, 0]].transpose(2, 0, 1)
+    if x.dtype != np.uint16:
+        raise RuntimeError()
+    return x
 
 class CustomImageArrayDataset(Dataset):
     def __init__(self, npy_dir, input_patch_size):
         super().__init__()
         self.patch_size = input_patch_size
         self.img_dir = pathlib.Path(npy_dir).resolve()
-        pattern = os.path.join(glob.escape(self.img_dir), "**", "*" + os.extsep + "npy")
+        pattern = os.path.join(glob.escape(str(self.img_dir)), "**", "*" + os.extsep + "npy")
         self.files = glob.glob(pattern, recursive=True)
 
     def __len__(self):
@@ -22,10 +31,8 @@ class CustomImageArrayDataset(Dataset):
 
     def __getitem__(self, idx):
         path = self.files[idx]
-        mem_array = open_memmap(path, mode="r")
-        if mem_array.dtype != uint16:
-            raise RuntimeError()
-        _, _, height, width = mem_array.shape
+        i_array = read_image(path)
+        _, height, width = i_array.shape
         j = random.randrange(height - self.patch_size)
         i = random.randrange(width - self.patch_size)
         arr = array(mem_array[:, :, j:j + self.patch_size, i:i + self.patch_size])

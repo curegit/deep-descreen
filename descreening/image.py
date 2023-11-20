@@ -34,6 +34,25 @@ def save_image(array, filepath):
     to_pil_image(array).save(filepath)
 
 
+# 
+def cmyk_tiff_to_wide_gamut_uint16_array(filepath):
+    with tmp
+        sp.run([magick, filepath, ])
+        s = read_image()
+        return s
+
+# 
+# truth_pair が真のとき、
+def halftone_srgb_image_to_wide_gamut_uint16_array(filepath, truth_pair=False):
+    with NamedTemporaryFile(mode="w", suffix=".tiff", dir=".") as cmyk_tmp:
+        sp.run([magick, filepath, "-intent", "", "-profile", "", cmyk_tmp.name]
+        with 
+    if truth_pair:
+        
+        return 
+
+
+
 
 print(out.shape)
 img2 = np.clip(np.rint(out * 65535), 0, 65535).astype(np.uint16).transpose(1, 2, 0)[:,:,[2,1,0]]

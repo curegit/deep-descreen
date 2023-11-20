@@ -42,7 +42,7 @@ def test_loop(dataloader, model, loss_fn):
     test_loss /= num_batches
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 <<<<<<< HEAD
-
-
 =======
->>>>>>> origin/desc
+
+
+>>>>>>> 59d09bd8f4b1c6d884e181d3766db2dd80c61c93

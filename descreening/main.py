@@ -5,11 +5,11 @@ from .dataset import CustomImageArrayDataset, CustomImageTensorDataset
 
 
 <<<<<<< HEAD
+def main():
+=======
 
 def cli():
-=======
-def main():
->>>>>>> origin/desc
+>>>>>>> 59d09bd8f4b1c6d884e181d3766db2dd80c61c93
     device = (
         "cuda"
         if torch.cuda.is_available()
@@ -55,6 +55,8 @@ def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
     print("Done!")
 
 <<<<<<< HEAD
+    
+=======
 
 
 
@@ -93,6 +95,4 @@ def convert():
         yy = y.detach().cpu().numpy()
         res[:, k, l] = yy[0]
     save_image(res, sys.argv[3])
-=======
-    
->>>>>>> origin/desc
+>>>>>>> 59d09bd8f4b1c6d884e181d3766db2dd80c61c93

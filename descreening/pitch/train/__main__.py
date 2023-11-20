@@ -7,8 +7,10 @@ from descreening.pitch.dataset import PitchImageArrayDataset
 from descreening.pitch.model import PitchModel
 
 
-def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
+from descreening.utilities import alt_filepath, build_filepath
 
+
+def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
     train_dataloader = DataLoader(training_data, batch_size=batch_size)
     test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
@@ -19,35 +21,25 @@ def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
         train_loop(train_dataloader, model, loss_fn, optimizer)
         test_loop(test_dataloader, model, loss_fn)
 
-
-        #i = rgb_image_to_wide_gamut_uint16_array()
-        #k = model.predict(i)
-        #print()
-
-
-
+        # i = rgb_image_to_wide_gamut_uint16_array()
+        # k = model.predict(i)
+        # print()
 
     print("Done!")
 
 
-
 if __name__ == "__main__":
-    device = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
-    )
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     model = PitchModel().to(device)
 
     a = sys.argv[1]
     real_data = sys.argv[2]
-
 
     dataset = PitchImageArrayDataset(a, device=device)
     training_data, test_data = random_split(dataset, [0.8, 0.2])
 
     train(model, training_data, test_data, epochs=100, batch_size=32, device=device)
 
-    torch.save(model.state_dict(), 'pitch_model_weights.pth')
+    path = alt_filepath(build_filepath(".", "pitch_model_weights", "pth"))
+    torch.save(model.state_dict(), path)
+    print(f"Saved: {path}")

@@ -1,7 +1,9 @@
 import sys
 import random
 import itertools
-from tempfile import NamedTemporaryFile
+import numpy as np
+import rich.progress
+from tempfile import TemporaryDirectory
 from PIL import Image
 from descreening.pitch import patch_size, n_samples
 from descreening.image import halftone_rgb_image_to_wide_gamut_uint16_array
@@ -26,14 +28,15 @@ if __name__ == "__main__":
     # 保存先ディレクトリを作成
     mkdirs(dest_dir)
     # n_samples 個のデータを生成する
-    for i in range(n_samples):
+    for i in rich.progress.track(range(n_samples), description="progress"):
         src = next(sources)
         # ピッチと角度をランダムに選択
         min_pitch, max_pitch = pitch_range
         pitch = random.uniform(min_pitch, max_pitch)
         angles = random.choice(cmyk_angles)
         # PNG 用一時ファイルを作成
-        with NamedTemporaryFile(dir="./tmp", mode="w+", suffix=".png", delete=False) as tmp_png:
+        with TemporaryDirectory() as dirname:
+            png_path = build_filepath(dirname, "tmp", "png")
             # ハーフトーン化の処理高速化のため必要な部分のみ切り取り（ハーフトーン化処理のときに端の情報が欲しいので大きめに切り出す）
             p_size = patch_size + 20
             img = Image.open(src)
@@ -49,12 +52,16 @@ if __name__ == "__main__":
                 with open(srgb_icc, "rb") as fp:
                     icc_bytes = fp.read()
                 cropped.info["icc_profile"] = icc_bytes
-            cropped.save(tmp_png.name)
+            cropped.save(png_path)
             # ハーフトーン化
-            array = halftone_rgb_image_to_wide_gamut_uint16_array(tmp_png.name, cmyk_icc, pitch, angles, perceptual=True)
+            array = halftone_rgb_image_to_wide_gamut_uint16_array(png_path, cmyk_icc, pitch, angles, perceptual=True)
             # 真ん中で切り出し
             j = (array.shape[1] - patch_size) // 2
             i = (array.shape[2] - patch_size) // 2
-            cropped_array = array[:, j:j + patch_size, i:i + patch_size]
-            # 正解ピッチをファイル名として保存
-            save_array(build_filepath(dest_dir, f"{pitch:.14f}", "npy"), cropped_array)
+            cropped_array = array[:, j : j + patch_size, i : i + patch_size]
+            # 正解ピッチをファイル名としてチャネル毎に保存
+            for channel in cropped_array:
+                # 分散が小さすぎるデータは含めない
+                if np.std(channel) < 0.02 * (2**16 - 1):
+                    continue
+                save_array(build_filepath(dest_dir, f"{pitch:.14f}", "npy"), channel)

@@ -26,22 +26,17 @@ class PitchImageArrayDataset(Dataset):
         self.device = device
 
     def __len__(self):
-        return len(self.files) * 3
+        return len(self.files)
 
     def __getitem__(self, idx):
-        path = self.files[idx // 3]
+        path = self.files[idx]
         array = load_array(path)
-        if array.dtype != uint16:
-            raise RuntimeError()
         channels, height, width = array.shape
         assert channels == 3
         assert height == patch_size
         assert width == patch_size
-        i = j = 0
-        #j = random.randrange(height - patch_size)
-        #i = random.randrange(width - patch_size)
-        arr = array[idx % 3:idx % 3 + 1, j : j + patch_size, i : i + patch_size]
-        x = arr
+        assert array.dtype == uint16
+        x = array
         y = np.array(float(pathlib.Path(path).stem))
         X = torch.from_numpy((x / (2**16 - 1)).astype(float32))
         Y = torch.from_numpy(y.astype(float32))

@@ -19,7 +19,9 @@ class PitchModel(Module):
         x = self.layer4(x)
         x = x.view(x.size(0), -1)  # Flatten
         x = self.layer5(x)
-        x = x.view(-1,)  # Flatten
+        x = x.view(
+            -1,
+        )  # Flatten
         return x
 
     def conv_module(self, in_channels, out_channels, kernel_size=9):
@@ -30,5 +32,5 @@ class PitchModel(Module):
             # nn.InstanceNorm2d(out_channels),
             nn.Conv2d(out_channels, out_channels, kernel_size=kernel_size, stride=1, padding=0),
             nn.LeakyReLU(0.2),
-            #nn.MaxPool2d(kernel_size=2, stride=2),
+            # nn.MaxPool2d(kernel_size=2, stride=2),
         )

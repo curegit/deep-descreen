@@ -1,5 +1,5 @@
 #
-patch_size = 128
+patch_size = 256
 
 #
 n_samples = 100

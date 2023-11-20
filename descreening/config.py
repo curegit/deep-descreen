@@ -1,22 +1,23 @@
 import sys
 from descreening.utilities import file_rel_path
 
-
-# magick コマンドへのパス
+# ImageMagick を呼び出すコマンドライン
 magick = ["magick"]
 
-#
+# halftonecv を呼び出すコマンドライン
 halftonecv = [sys.executable, "-m", "halftonecv"]
 
-srgb_icc = file_rel_path("../sRGB.icc")
+# sRGB プロファイルへのパス
+srgb_icc = file_rel_path("profiles/sRGB.icc")
 
-wide_rgb_icc = file_rel_path("../WideGamutD65.icc")
+# 広域 RGB プロファイルへのパス
+wide_rgb_icc = file_rel_path("profiles/WideGamutCompat-v4.icc")
 
 #
-pitches = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16]
+pitches = [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16]
 
 #
-pitch_range = min(pitches), max(pitches)
+pitch_range = (0.9, 25)
 
 #
 cmyk_angles = [

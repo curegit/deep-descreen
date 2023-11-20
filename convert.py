@@ -5,6 +5,8 @@ from chainer import serializers
 import numpy as np
 #import cupy as cp
 
+
+
 i = Image.open("test2.bmp")
 # ニューラルネットワークを作成
 model = RgbNet()

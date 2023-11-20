@@ -10,14 +10,6 @@ from pathlib import Path
 import subprocess as sp
 
 
-[
-(15, 45, 90, 75)
-(15, 75, 30, 45)
-(15, 75, 90, 45)
-(105, 75, 90, 15)
-(165, 45, 90, 105)
-]
-
 for
 
 

@@ -16,7 +16,7 @@ class SillyModel(BaseModel):
     def conv_module(self, in_channels, out_channels):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=5, stride=1, padding=0),
-            #nn.BatchNorm2d(out_channels),
+            nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(0.2),
             #nn.MaxPool2d(kernel_size=2, stride=2)
         )

@@ -31,12 +31,12 @@ class PitchImageArrayDataset(Dataset):
     def __getitem__(self, idx):
         path = self.files[idx]
         array = load_array(path)
-        channels, height, width = array.shape
-        assert channels == 3
+        height, width = array.shape
+        #assert channels == 3
         assert height == patch_size
         assert width == patch_size
         assert array.dtype == uint16
-        x = array
+        x = array.reshape((1, height, width))
         y = np.array(float(pathlib.Path(path).stem))
         X = torch.from_numpy((x / (2**16 - 1)).astype(float32))
         Y = torch.from_numpy(y.astype(float32))

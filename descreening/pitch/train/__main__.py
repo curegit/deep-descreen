@@ -33,7 +33,7 @@ if __name__ == "__main__":
     model = PitchModel().to(device)
 
     a = sys.argv[1]
-    real_data = sys.argv[2]
+    #real_data = sys.argv[2]
 
     dataset = PitchImageArrayDataset(a, device=device)
     training_data, test_data = random_split(dataset, [0.8, 0.2])

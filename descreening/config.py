@@ -14,10 +14,10 @@ srgb_icc = file_rel_path("profiles/sRGB.icc")
 wide_rgb_icc = file_rel_path("profiles/WideGamutCompat-v4.icc")
 
 #
-pitches = [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16]
+pitches = [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10]
 
 #
-pitch_range = (0.9, 25)
+pitch_range = (0.9, 16)
 
 #
 cmyk_angles = [

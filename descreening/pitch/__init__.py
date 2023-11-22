@@ -1,5 +1,5 @@
-#
-patch_size = 128
+from .model import patch_size
+
 
 #
-n_samples = 1000
+n_samples = 10000

@@ -30,10 +30,13 @@ if __name__ == "__main__":
     # n_samples 個のデータを生成する
     for i in rich.progress.track(range(n_samples), description="progress"):
         src = next(sources)
+        print(src)
         # ピッチと角度をランダムに選択
         min_pitch, max_pitch = pitch_range
         pitch = random.uniform(min_pitch, max_pitch)
         angles = random.choice(cmyk_angles)
+        # 角度バリエーションを増やす
+        angles = tuple([a + random.random() * 90 for a in angles])
         # PNG 用一時ファイルを作成
         with TemporaryDirectory() as dirname:
             png_path = build_filepath(dirname, "tmp", "png")

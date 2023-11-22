@@ -70,7 +70,9 @@ def halftone_rgb_image_to_wide_gamut_uint16_array(filepath, cmyk_icc_path, pitch
             sp.run(magick + [filepath, "-intent", "relative", "-black-point-compensation", "-profile", cmyk_icc_path, cmyk_tmp], check=True)
         with TemporaryDirectory(dir="./tmp") as dirname:
 
-            sp.run(halftonecv + [cmyk_tmp, "--quiet", "-d", dirname, "-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.14f}", "-a"] + [str(a) for a in angles], check=True)
+            print(filepath)
+
+            sp.run(halftonecv + [cmyk_tmp, "-d", dirname, "-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.14f}", "-a"] + [str(a) for a in angles], check=True)
             f = glob_shallowly(dirname, "tiff")
             assert len(f) == 1
             return cmyk_tiff_to_wide_gamut_uint16_array(f[0])

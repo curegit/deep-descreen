@@ -15,7 +15,7 @@ def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
     test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00002)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         train_loop(train_dataloader, model, loss_fn, optimizer)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     dataset = PitchImageArrayDataset(a, device=device)
     training_data, test_data = random_split(dataset, [0.8, 0.2])
 
-    train(model, training_data, test_data, epochs=100, batch_size=32, device=device)
+    train(model, training_data, test_data, epochs=1000, batch_size=256, device=device)
 
     path = alt_filepath(build_filepath(".", "pitch_model_weights", "pth"))
     torch.save(model.state_dict(), path)

@@ -15,7 +15,7 @@ class PitchModel(Module):
         #self.layer2 = self.conv_module(channels, channels)
         #self.layer3 = self.conv_module(channels, channels)
         #self.layer4 = nn.Conv2d(channels, 64, kernel_size=2, stride=1, padding=0)
-        self.layer5 = nn.Sequential(nn.LazyLinear(256), nn.PReLU(), nn.LazyLinear(64), nn.ReLU(), nn.LazyLinear(1))
+        self.layer5 = nn.Sequential( nn.LazyLinear(1))
 
     def forward(self, x):
         x = torch.fft.fft2(self.n(x))

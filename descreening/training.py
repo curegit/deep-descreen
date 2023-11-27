@@ -10,6 +10,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     for i, (X, y) in enumerate(dataloader):
         # Compute prediction and loss
         pred = model(X)
+        print(pred.shape)
         loss = loss_fn(pred, y)
 
         # Backpropagation

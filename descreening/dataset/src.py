@@ -31,8 +31,13 @@ class CustomImageArrayDataset(Dataset):
 
     def __getitem__(self, idx):
         path = self.files[idx]
-        i_array = read_image(path)
-        _, height, width = i_array.shape
+        mem_array = open_memmap(path, mode="r")
+        if mem_array.dtype != uint16:
+            raise RuntimeError()
+        _, _, height, width = mem_array.shape
+        assert height >= self.patch_size
+        assert width >= self.patch_size
+
         j = random.randrange(height - self.patch_size)
         i = random.randrange(width - self.patch_size)
         arr = array(mem_array[:, :, j:j + self.patch_size, i:i + self.patch_size])
@@ -57,4 +62,5 @@ class CustomImageTensorDataset(Dataset):
         Y = Y[:, self.unpad:-self.unpad, self.unpad:-self.unpad]
         X = X.to(self.device)
         Y = Y.to(self.device)
+        print(Y.shape)
         return X, Y

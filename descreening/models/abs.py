@@ -1,12 +1,11 @@
-from ..utils import range_chunks
-from ..modules import AbsModule
+from abc import ABC, abstractmethod
 
+from ..utilities import range_chunks
 
-class AbsModel(AbsModule):
+from torch import nn
 
-<<<<<<< HEAD
-    def patch_slices(self, img_height, img_width, patch_size):
-=======
+class AbsModel(ABC, nn.Module):
+
     @abstractmethod
     def forward(self, x):
         raise NotImplementedError()
@@ -29,21 +28,12 @@ class AbsModel(AbsModule):
 
 
     def patch_slices(self, height, width, patch_size):
->>>>>>> 59d09bd8f4b1c6d884e181d3766db2dd80c61c93
         for h_start, h_stop in range_chunks(height, patch_size):
             for w_start, w_stop in range_chunks(width, patch_size):
                 h_pad = self.required_padding(h_stop - h_start)
                 w_pad = self.required_padding(w_stop - w_start)
-<<<<<<< HEAD
-                h_slice = slice(h_start - h_pad - h_pad, h_stop)
-                w_slice = slice(w_start - w_pad - w_pad, w_stop)
-                padded_input_slice = (h_slice, w_slice)
-                output_slice = (slice(h_start, h_stop), slice(w_start, w_stop))
-                yield padded_input_slice, output_slice
-=======
                 h_s = slice(h_start, h_stop)
                 w_s = slice(w_start, w_stop)
                 h_slice = slice(h_start - h_pad + h_pad, h_stop + h_pad * 2)
-                w_slice = slice(w_start - w_pad + h_pad, w_stop + w_pad * 2)
+                w_slice = slice(w_start - w_pad + w_pad, w_stop + w_pad * 2)
                 yield (h_slice, w_slice), (h_s, w_s)
->>>>>>> 59d09bd8f4b1c6d884e181d3766db2dd80c61c93

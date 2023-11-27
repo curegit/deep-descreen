@@ -44,10 +44,10 @@ def cmyk_tiff_to_wide_gamut_uint16_array(filepath):
         return i
 
 
-def save_wide_gamut_uint16_array_as_srgb():
-    print(out.shape)
-    img2 = np.clip(np.rint(out * 65535), 0, 65535).astype(np.uint16).transpose(1, 2, 0)[:,:,[2,1,0]]
-    cv2.imwrite(f"{sys.argv[3]}.png", img2)
+def save_wide_gamut_uint16_array_as_srgb(arr, filepath):
+    print(arr.shape)
+    img2 = np.clip(np.rint(arr * 65535), 0, 65535).astype(np.uint16).transpose(1, 2, 0)[:,:,[2,1,0]]
+    cv2.imwrite(filepath, img2)
 
 
 def rgb_image_to_wide_gamut_uint16_array(filepath):

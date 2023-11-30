@@ -86,7 +86,7 @@ def convert():
     patch_size = model.output_size(512)
     img = read_uint16_image(sys.argv[3])
 
-    #img = img[:,:-3,:]
+    img = img[:,:-1,:-1]
     h, w = img.shape[1:3]
     # TODO: 4倍数にあわせる
     ppp_h = h % 512

@@ -36,7 +36,8 @@ if __name__ == "__main__":
         pitch = random.uniform(min_pitch, max_pitch)
         angles = random.choice(cmyk_angles)
         # 角度バリエーションを増やす
-        angles = tuple([a + random.random() * 90 for a in angles])
+        r = random.random()
+        angles = tuple([a + r * 90 for a in angles])
         # PNG 用一時ファイルを作成
         with TemporaryDirectory() as dirname:
             png_path = build_filepath(dirname, "tmp", "png")
@@ -63,8 +64,8 @@ if __name__ == "__main__":
             i = (array.shape[2] - patch_size) // 2
             cropped_array = array[:, j : j + patch_size, i : i + patch_size]
             # 正解ピッチをファイル名としてチャネル毎に保存
-            for channel in cropped_array:
+            for i, channel in enumerate(cropped_array):
                 # 分散が小さすぎるデータは含めない
                 if np.std(channel) < 0.02 * (2**16 - 1):
                     continue
-                save_array(build_filepath(dest_dir, f"{pitch:.14f}", "npy"), channel)
+                save_array(build_filepath(dest_dir, f"{pitch:.14f}" + f"00{i}", "npy"), channel)

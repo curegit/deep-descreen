@@ -17,7 +17,7 @@ wide_rgb_icc = file_rel_path("profiles/WideGamutCompat-v4.icc")
 pitches = [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10]
 
 #
-pitch_range = (0.9, 16)
+pitch_range = (0.9, 10)
 
 #
 cmyk_angles = [

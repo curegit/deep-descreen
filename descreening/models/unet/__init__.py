@@ -104,7 +104,8 @@ class UNetLikeModel(AbsModel):
         h1 = self.block1(m3)
         h2 = self.block2(m2, h1)
         h3 = self.block3(m1, h2)
-        return self.layer4(h3)
+        _h4, r = fit_to_smaller(self.layer4(h3), x)
+        return _h4 + r
 
     def input_size(self, s):
         return self.block1.input_size(self.block2.input_size(self.block3.input_size(input_size(s, 3)))) * 4

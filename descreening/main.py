@@ -1,10 +1,10 @@
 import torch
 from torch import nn
 from .training import train_loop, test_loop
-from .dataset import CustomImageArrayDataset, CustomImageTensorDataset
+from .dataset import CustomImageArrayDataset_, CustomImageTensorDataset
 
 from .models.unet import UNetLikeModel
-from .image import read_uint16_image, save_wide_gamut_uint16_array_as_srgb
+from .image import save_image, read_uint16_image, save_wide_gamut_uint16_array_as_srgb
 import sys
 import numpy as np
 
@@ -23,10 +23,11 @@ def cli():
     )
 
 
+
     from .models.unet import UNetLikeModel
     model = UNetLikeModel().to(device)
 
-    patch_size = 512
+    patch_size = 256
 
     p = model.reduced_padding(patch_size)
     print(p)
@@ -38,29 +39,40 @@ def cli():
 
 
 
-    training_data = CustomImageTensorDataset(CustomImageArrayDataset("data", patch_size), p, device)
-    test_data = CustomImageTensorDataset(CustomImageArrayDataset("data_test", patch_size), p, device)
+    training_data = CustomImageTensorDataset(CustomImageArrayDataset_("data_", patch_size), p, device)
+    test_data = CustomImageTensorDataset(CustomImageArrayDataset_("data_test_", patch_size), p, device)
 
 
 
-    train(model, training_data, test_data, 2200, 11)
+    train(model, training_data, test_data, 300, 16, device=device)
 
     torch.save(model.state_dict(), 'model_weights.pth')
 
 
 def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
     from torch.utils.data import DataLoader
-    train_dataloader = DataLoader(training_data, batch_size=batch_size)
-    test_dataloader = DataLoader(test_data, batch_size=batch_size)
+    train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    #loss_fn = nn.L1Loss()
+    #optimizer = torch.optim.RAdam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        train_loop(train_dataloader, model, loss_fn, optimizer)
-        test_loop(test_dataloader, model, loss_fn)
+        train_loop(train_dataloader, model, loss_fn, optimizer, device=device)
+        test_loop(test_dataloader, model, loss_fn, device=device)
+        torch.save(model.state_dict(), f'model_weights-{t}.pth')
     print("Done!")
 
+
+
+from PIL import Image
+from PIL.Image import Resampling
+from numpy import rint, asarray, uint8, float32
+
+def from_pil_image(img):
+      return (asarray(img.convert("RGB"), dtype=uint8).transpose(2, 0, 1) / 255).astype(float32)
 
 
 
@@ -72,6 +84,7 @@ def convert():
         if torch.backends.mps.is_available()
         else "cpu"
     )
+    device = "cpu"
 
 
     #from .models import UNetLikeModel
@@ -84,7 +97,9 @@ def convert():
     print(model)
 
     patch_size = model.output_size(512)
-    img = read_uint16_image(sys.argv[3])
+    #img = read_uint16_image(sys.argv[3])
+    im = Image.open(sys.argv[3])
+    img = from_pil_image(im)
 
     img = img[:,:-1,:-1]
     h, w = img.shape[1:3]
@@ -101,11 +116,12 @@ def convert():
     for (j, i), (k, l) in model.patch_slices(a_h, a_w, patch_size):
         print(k)
         x = img[:, :, j, i]
-        t = torch.from_numpy((x / (2 ** 16 - 1)).astype("float32"))
+        t = torch.from_numpy(x.astype("float32"))
         t = t.to(device)
         y = model(t)
         yy = y.detach().cpu().numpy()
         print(y.shape)
         res[:, k, l] = yy[0]
     res = res[:, :h, :w]
-    save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])
+    save_image(res, sys.argv[4])
+    #save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

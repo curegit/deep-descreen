@@ -1,29 +1,47 @@
 import torch
 from torch import nn
 
-def train_loop(dataloader, model, loss_fn, optimizer):
+def train_loop(dataloader, model, loss_fn, optimizer, device):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
 
     for i, (X, y) in enumerate(dataloader):
+        X = X.to(device)
+        y = y.to(device)
+        """
         # Compute prediction and loss
         pred = model(X)
-        print(pred.shape)
+        #print(pred.shape)
         loss = loss_fn(pred, y)
 
         # Backpropagation
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+        """
+        loss = None
+        def clos():
+            global loss
+            pred = model(X)
+            loss = loss_fn(pred, y)
+            # Backpropagation
+            optimizer.zero_grad()
+            loss.backward()
+            return loss
 
-        if i % 100 == 0:
-            loss, current = loss.item(), (i + 1) * len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        optimizer.step(clos)
 
 
-def test_loop(dataloader, model, loss_fn):
+        #if i % 100 == 0:
+            #loss, current = loss.item(), (i + 1) * len(X)
+
+            #print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+
+def test_loop(dataloader, model, loss_fn, device):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.eval()
@@ -35,6 +53,8 @@ def test_loop(dataloader, model, loss_fn):
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
     with torch.no_grad():
         for X, y in dataloader:
+            X = X.to(device)
+            y = y.to(device)
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
 

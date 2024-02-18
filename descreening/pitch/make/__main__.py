@@ -58,7 +58,7 @@ if __name__ == "__main__":
                 cropped.info["icc_profile"] = icc_bytes
             cropped.save(png_path)
             # ハーフトーン化
-            array = halftone_rgb_image_to_wide_gamut_uint16_array(png_path, cmyk_icc, pitch, angles, perceptual=True)
+            array = halftone_rgb_image_to_wide_gamut_uint16_array(png_path, cmyk_icc, pitch, angles, perceptual=False)
             # 真ん中で切り出し
             j = (array.shape[1] - patch_size) // 2
             i = (array.shape[2] - patch_size) // 2

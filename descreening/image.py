@@ -22,6 +22,7 @@ def read_uint16_image(filepath):
 
 
 def to_pil_image(array):
+    from PIL import Image
     srgb = np.rint(array * 255).clip(0, 255).astype(np.uint8)
     i = Image.fromarray(srgb.transpose(1, 2, 0), "RGB")
     #i.info.update(icc_profile=ImageCms.getOpenProfile(filerelpath("profiles/sGray.icc"))
@@ -65,19 +66,58 @@ def halftone_rgb_image_to_wide_gamut_uint16_array(filepath, cmyk_icc_path, pitch
     with TemporaryDirectory(dir="./tmp") as dirname2:
         cmyk_tmp = build_filepath(dirname2, "tmp", "tiff")
         if perceptual:
-            sp.run(magick + [filepath, "-intent", "perceptual", "-black-point-compensation", "-profile", cmyk_icc_path, cmyk_tmp], check=True)
+            sp.run(magick + [filepath, "-intent", "perceptual", "-profile", cmyk_icc_path, "tiff:" + cmyk_tmp], check=True)
         else:
-            sp.run(magick + [filepath, "-intent", "relative", "-black-point-compensation", "-profile", cmyk_icc_path, cmyk_tmp], check=True)
+            sp.run(magick + [filepath, "-intent", "relative", "-profile", cmyk_icc_path, "tiff:" + cmyk_tmp], check=True)
         with TemporaryDirectory(dir="./tmp") as dirname:
 
             print(filepath)
+            c = halftonecv + [cmyk_tmp, "-q", "-d", dirname, "-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.14f}", "-a"] + [str(a) for a in angles]
+            print(*c)
 
-            sp.run(halftonecv + [cmyk_tmp, "-d", dirname, "-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.14f}", "-a"] + [str(a) for a in angles], check=True)
+            try:
+                r = sp.run(c, check=False, capture_output=True)
+            except:
+                pass
+            print(r.stderr.decode("utf-8"))
             f = glob_shallowly(dirname, "tiff")
+            print(f)
+            input()
             assert len(f) == 1
             if truth_pair:
                 return cmyk_tiff_to_wide_gamut_uint16_array(f[0]), cmyk_tiff_to_wide_gamut_uint16_array(cmyk_tmp)
             return cmyk_tiff_to_wide_gamut_uint16_array(f[0])
+
+
+# RGB 画像をハーフトーン化し、
+# ソース画像には ICC プロファイルが埋め込まれている必要がある
+# truth_pair が真のとき、
+def halftone_image_to_wide_gamut_array(filepath, cmyk_profile_path, pitch, angles, truth_pair=False, perceptual=False):
+    #with TemporaryDirectory(dir="./tmp") as dirname2:
+        #cmyk_tmp = build_filepath(dirname2, "tmp", "tiff")
+        if perceptual:
+            sp.run(magick + [filepath, "-intent", "perceptual", "-profile", cmyk_profile_path, "tiff:-"], check=True)
+        else:
+            sp.run(magick + [filepath, "-intent", "relative", "-profile", cmyk_profile_path, "tiff:-"], check=True)
+        #with TemporaryDirectory(dir="./tmp") as dirname:
+
+            print(filepath)
+            c = halftonecv + [cmyk_tmp, "-q", "-d", dirname, "-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.14f}", "-a"] + [str(a) for a in angles]
+            print(*c)
+
+            try:
+                r = sp.run(c, check=False, capture_output=True)
+            except:
+                pass
+            print(r.stderr.decode("utf-8"))
+            f = glob_shallowly(dirname, "tiff")
+            print(f)
+            input()
+            assert len(f) == 1
+            if truth_pair:
+                return cmyk_tiff_to_wide_gamut_uint16_array(f[0]), cmyk_tiff_to_wide_gamut_uint16_array(cmyk_tmp)
+            return cmyk_tiff_to_wide_gamut_uint16_array(f[0])
+
 
 
 

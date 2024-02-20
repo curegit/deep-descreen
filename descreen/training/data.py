@@ -4,11 +4,11 @@ from pathlib import Path
 from numpy import ndarray
 from torch import Tensor
 from torch.utils.data import Dataset
-from ..image import load_image
+from ..image import load_image, save_image, halftonecv, magick_wide_png
 from ..utilities import flatten
 from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
-from ..utilities.subps import halftonecv, magickpng
+
 
 
 class HalftonePairDataset(Dataset[ndarray]):
@@ -41,22 +41,26 @@ class HalftonePairDataset(Dataset[ndarray]):
         path = self.files[idx]
 
 
-        img = Image.open(path)
+        i = load_image(path, transpose=False, normalize=False)
+        height, width = i.shape[:2]
         margin = 8
         crop_size = self.patch_size + margin
         #print(random.random())
-        left = random.randrange(img.width - crop_size)
-        upper = random.randrange(img.height - crop_size)
+        left = random.randrange(width - crop_size)
+        top = random.randrange(height - crop_size)
 
         right = left + crop_size
-        lower = upper + crop_size
-        img = img.crop((left, upper, right, lower))
-        assert img.height >= crop_size
-        assert img.width >= crop_size
+        bottom = top + crop_size
+        i = i[top:bottom ,left:right,:]
+        #img = img.crop((left, upper, right, lower))
+        assert height >= crop_size
+        assert width >= crop_size
+
         import io
 
         buf = io.BytesIO()
-        img.save(buf, format='PNG')
+        save_image(i, buf, transposed=False, prefer16=False)
+        #img.save(buf, format='PNG')
 
         img_in_bytes = buf.getvalue()
 
@@ -67,12 +71,24 @@ class HalftonePairDataset(Dataset[ndarray]):
         theta = random.random() * 90
         angles = tuple(a + theta for a in angles)
 
-        halftone = halftonecv(img, ["-p", f"{pitch:.8f}", "-a"] + [str(a) for a in angles])
+        #
+
+        halftone = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.8f}", "-a"] + [str(a) for a in angles] + ["-c", "rel", "-C", self.cmyk_profile])
+        norm = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-K", "-c", "rel", "-C", self.cmyk_profile])
 
         #
         cmds = []
-        wide_x = magickpng(halftone, cmds, png48=True)
-        wide_y = magickpng(img, cmds, png48=True)
+        wide_x = magick_wide_png(halftone, relative=True)
+        wide_y = magick_wide_png(norm, relative=True)
+
+        #debug
+        with open("a.png", "wb") as fp:
+            fp.write(wide_x)
+        with open("b.png", "wb") as fp:
+            fp.write(wide_y)
+
+
+
         #
         x = load_image(wide_x, orient=False, assert16=True)
         y = load_image(wide_y, orient=False, assert16=True)

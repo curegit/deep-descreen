@@ -1,20 +1,16 @@
-import typer
+import sys
+import torch
+from io import BytesIO
+from .models.unet import UNetLikeModel
+from .image import load_image, save_image, magick_wide_png, magick_srgb_png
+
+import numpy as np
 
 def main():
-
-    	except KeyboardInterrupt:
-		eprint("KeyboardInterrupt")
-		exit_code = 130
-		return exit_code
-
-
-def con():
     device = "cpu"
 
-
-    #from .models import UNetLikeModel
     model = UNetLikeModel()
-    model.load_state_dict(torch.load(sys.argv[2]))
+    model.load_state_dict(torch.load(sys.argv[1]))
 
 
     model.to(device)
@@ -24,17 +20,17 @@ def con():
     patch_size = model.output_size(512)
     #img = read_uint16_image(sys.argv[3])
 
-    with open(sys.argv[3], "rb") as fp:
-        i = load_image(magickpng(fp.read(), png48=True), assert16=True)
+    with open(sys.argv[2], "rb") as fp:
+        img = load_image(magick_wide_png(fp.read(), relative=True), assert16=True)
 
 
     height, width = img.shape[1:3]
     # TODO: 4倍数にあわせる
-    ppp_h = h % 512
-    ppp_w = w % 512
-    a_h = h + ppp_h
-    a_w = w + ppp_w
-    img = img.reshape((1, 3, h, w))
+    ppp_h = height % 512
+    ppp_w = width % 512
+    a_h = height + ppp_h
+    a_w = width + ppp_w
+    img = img.reshape((1, 3, height, width))
     res = np.zeros((3, a_h, a_w), dtype="float32")
     p = model.required_padding(patch_size)
 
@@ -48,6 +44,10 @@ def con():
         yy = y.detach().cpu().numpy()
         print(y.shape)
         res[:, k, l] = yy[0]
-    res = res[:, :h, :w]
-    save_image(res, sys.argv[4])
+        break
+    buf = BytesIO()
+    save_image(res, buf, prefer16=True)
+    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=False)
+    with open(sys.argv[3], "wb") as fp:
+        fp.write(r)
     #save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

@@ -1,8 +1,12 @@
+import subprocess as sp
 import cv2
 import numpy as np
+from io import BufferedIOBase
 from pathlib import Path
 from numpy import ndarray
-from .utilities.filesys import resolve_path
+from .utilities.filesys import resolve_path, self_relpath
+
+
 
 
 # ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする
@@ -21,6 +25,8 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
     if not orient:
         flags |= cv2.IMREAD_IGNORE_ORIENTATION
     img = cv2.imdecode(bin, flags)
+    if img is None:
+        raise RuntimeError()
     if img.ndim != 3 or img.shape[2] != 3:
         raise RuntimeError()
     if transpose:
@@ -44,10 +50,89 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
 
 
 
-def to_pil_image(array):
-	srgb = rint(array * 255).clip(0, 255).astype(uint8)
-	return Image.fromarray(srgb.transpose(1, 2, 0), "RGB")
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True):
+    match img.dtype:
+        case np.float32:
+            if prefer16:
+                q = 2 ** 16 - 1
+                dtype = np.uint16
+            else:
+                q = 2 ** 8 - 1
+                dtype = np.uint8
+            print(img)
+            a = np.rint(img * q).clip(0, q).astype(dtype)
+        case np.uint8 | np.uint16:
+            a = img
+        case _:
+            raise ValueError()
 
-def save_image(array, filepath):
-	to_pil_image(array).save(filepath)
+    if transposed:
+        # HxWxBGR にする
+        a = a.transpose(1, 2, 0)[:, :, [2, 1, 0]]
 
+    ok, bin = cv2.imencode(".png", a, )
+    if not ok:
+        raise RuntimeError()
+    buffer = bin.tobytes()
+    match filelike:
+        case str() | Path() as path:
+            with open(resolve_path(path), "wb") as fp:
+                fp.write(buffer)
+        case BufferedIOBase() as stream:
+            stream.write(buffer)
+        case _:
+            raise ValueError()
+
+
+
+
+
+def halftonecv(input_img: bytes, args: list[str]) -> bytes:
+    try:
+        cp = sp.run(
+            ["halftonecv", "-", "-O", "-q"] + args,
+            check=True,
+            text=False,
+            capture_output=True,
+            input=input_img,
+        )
+        return cp.stdout
+    except sp.CalledProcessError as e:
+        e.returncode
+        match e.stderr:
+            case str() as stderr:
+                pass
+            case bytes() as bstderr:
+                bstderr.decode()
+        raise
+
+
+def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> bytes:
+    try:
+        cp = sp.run(
+            ["magick", "-"] + args + ["PNG48:-" if png48 else "PNG24:-"],
+            check=True,
+            text=False,
+            capture_output=True,
+            input=input_img,
+        )
+        return cp.stdout
+    except sp.CalledProcessError as e:
+        e.returncode
+        match e.stderr:
+            case str() as stderr:
+                pass
+            case bytes() as bstderr:
+                bstderr.decode()
+        raise
+
+
+def magick_wide_png(input_img: bytes, relative=True) -> bytes:
+    wide_profile = self_relpath("assets") / "WideGamutCompat-v4.icc"
+    intent = "Relative" if relative else "Perceptual"
+    return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)], png48=True)
+
+def magick_srgb_png(input_img: bytes, relative=True, prefer48:bool=False) -> bytes:
+    srgb_profile = self_relpath("assets") / "sRGB-v4.icc"
+    intent = "Relative" if relative else "Perceptual"
+    return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)], png48=prefer48)

@@ -1,5 +1,4 @@
 from torch import nn
-from .. import BaseModel
 
 from ..utils import input_size, output_size
 
@@ -34,4 +33,3 @@ class SillyModel(BaseModel):
 
     def output_size(self, s):
         return output_size(output_size(output_size(output_size(s, 5), 5), 5), 3)
-    

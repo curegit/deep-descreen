@@ -14,3 +14,12 @@ This project solves it by using CNN (Convolutional Neural Network) which convert
 Here are the provisional result and comparison to the baseline (Gaussian blur).
 
 ![comparison](comparison.png)
+
+
+## Train
+
+###
+
+```
+python3 -m descreening.pitch.make JapanColor2011Coated.icc images pitch_dataset
+```

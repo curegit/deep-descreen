@@ -4,7 +4,12 @@ from .training import train_loop, test_loop
 from .dataset import CustomImageArrayDataset, CustomImageTensorDataset
 
 
+<<<<<<< HEAD
+
+def cli():
+=======
 def main():
+>>>>>>> origin/desc
     device = (
         "cuda"
         if torch.cuda.is_available()
@@ -26,13 +31,13 @@ def main():
 
 
 
-    training_data = CustomImageTensorDataset(CustomImageArrayDataset("data", patch_size), p)
-    test_data = CustomImageTensorDataset(CustomImageArrayDataset("data_test", patch_size), p)
+    training_data = CustomImageTensorDataset(CustomImageArrayDataset("data", patch_size), p, device)
+    test_data = CustomImageTensorDataset(CustomImageArrayDataset("data_test", patch_size), p, device)
 
 
 
-    train(model, training_data, test_data, 200, 2)
-    
+    train(model, training_data, test_data, 2200, 11)
+
     torch.save(model.state_dict(), 'model_weights.pth')
 
 
@@ -49,4 +54,45 @@ def train(model, training_data, test_data, epochs, batch_size, device="cpu"):
         test_loop(test_dataloader, model, loss_fn)
     print("Done!")
 
+<<<<<<< HEAD
+
+
+
+def convert():
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+
+
+    from .models import SillyModel
+    model = SillyModel()
+    model.load_state_dict(torch.load(sys.argv[1]))
+
+
+    model.to(device)
+    model.eval()
+    print(model)
+
+    patch_size = 256
+    img = read_image(sys.argv[2])
+
+    h, w = img.shape[1:3]
+    img = img.reshape((1, 3, h, w))
+    res = np.zeros((3, h, w), dtype="float32")
+    p = model.required_padding(patch_size)
+    img = np.pad(img, ((0, 0), (0, 0), (p, p), (p, p)), mode="symmetric")
+    for (j, i), (k, l) in model.patch_slices(h, w, patch_size):
+        x = img[:, :, j, i]
+        t = torch.from_numpy((x / (2 ** 16 - 1)).astype("float32"))
+        t = t.to(device)
+        y = model(t)
+        yy = y.detach().cpu().numpy()
+        res[:, k, l] = yy[0]
+    save_image(res, sys.argv[3])
+=======
     
+>>>>>>> origin/desc

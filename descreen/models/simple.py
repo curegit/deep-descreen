@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from ..utilities.array import fit_to_smaller
+from .abs import AbsModel
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, activation):
@@ -23,7 +24,7 @@ class ResidualBlock(nn.Module):
         return out + r
 
 
-class TopLevelModel(nn.Module):
+class TopLevelModel(AbsModel):
     def __init__(self, internal_channels, activation, N):
         super(TopLevelModel, self).__init__()
         in_channels = out_channels = 3
@@ -39,3 +40,13 @@ class TopLevelModel(nn.Module):
         out = self.conv2(out)
         r, out = fit_to_smaller(residual, out)
         return out + r
+
+    def input_size(self, output_size):
+        n = 1024 - self.output_size(1024)
+        return output_size + n
+
+    def output_size(self, input_size):
+        mock_input = torch.zeros((1, self.conv1.in_channels, input_size, input_size))
+        mock_output = self.forward(mock_input)
+        _, _, height, width = mock_output.size()
+        return height

@@ -2,21 +2,30 @@ import torch
 from torch import nn
 
 from torch import Tensor
-
+from torch.optim.swa_utils import AveragedModel
+from torch.optim.swa_utils import get_ema_multi_avg_fn
 from torch.utils.data import DataLoader
 
 from .data import HalftonePairDataset
+from .loss import total_variation
+from ..models.unet import UNetLikeModel
+from ..models.simple import TopLevelModel
+model = UNetLikeModel()
+ac = torch.nn.functional.leaky_relu
+#model = TopLevelModel(128, ac, 8)
 
 def train(model, train_data_dir, valid_data_dir, device=None):
     model.to(device)
     model.train()
+    amodel = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(0.999))
     batch_size = 8
 
-    patch_size = 256
+    patch_size = 364
     loss_fn = nn.MSELoss()
     #loss_fn = nn.L1Loss()
-    #optimizer = torch.optim.RAdam(model.parameters(), lr=0.001)
-    optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
+    optimizer = torch.optim.RAdam(model.parameters(), lr=0.001)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=0.002)
+    #optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
 
     p = model.reduced_padding(patch_size)
     print(p)
@@ -55,20 +64,33 @@ def train(model, train_data_dir, valid_data_dir, device=None):
 
 
     def train_step(x, y ):
-            loss = None
-            def clos():
-                global loss
+            if False:
+                loss = None
+                def clos():
+                    global loss
+                    pred = model(x)
+                    loss = loss_fn(pred, y)
+                    print(f"loss: {loss}")
+                    # Backpropagation
+                    optimizer.zero_grad()
+                    loss.backward()
+                    return loss
+
+                optimizer.step(clos)
+            else:
                 pred = model(x)
-                loss = loss_fn(pred, y)
-                print(f"loss: {loss}")
-                # Backpropagation
+                loss = loss_fn(pred, y) + (0.5 * total_variation(pred)).mean()
                 optimizer.zero_grad()
                 loss.backward()
-                return loss
+                print(f"loss: {loss}")
+                optimizer.step()
+                amodel.update_parameters(model)
 
-            optimizer.step(clos)
-
-    train_loop(16)
+    try:
+        train_loop(5000)
+    except KeyboardInterrupt:
+        pass
+    return amodel
 
 
         #if i % 100 == 0:

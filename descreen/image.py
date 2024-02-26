@@ -126,13 +126,14 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
                 bstderr.decode()
         raise
 
+wide_profile = self_relpath("assets") / "WideGamutCompat-v4.icc"
 
 def magick_wide_png(input_img: bytes, relative=True) -> bytes:
-    wide_profile = self_relpath("assets") / "WideGamutCompat-v4.icc"
+
     intent = "Relative" if relative else "Perceptual"
     return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)], png48=True)
 
-def magick_srgb_png(input_img: bytes, relative=True, prefer48:bool=False) -> bytes:
+def magick_srgb_png(input_img: bytes, relative=True, prefer48:bool=False, assume_wide=True) -> bytes:
     srgb_profile = self_relpath("assets") / "sRGB-v4.icc"
     intent = "Relative" if relative else "Perceptual"
-    return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)], png48=prefer48)
+    return magick_png(input_img, ["-profile", str(wide_profile), "-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)], png48=prefer48)

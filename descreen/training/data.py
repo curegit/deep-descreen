@@ -82,10 +82,10 @@ class HalftonePairDataset(Dataset[ndarray]):
         wide_y = magick_wide_png(norm, relative=True)
 
         #debug
-        with open("a.png", "wb") as fp:
-            fp.write(wide_x)
-        with open("b.png", "wb") as fp:
-            fp.write(wide_y)
+        #with open("a.png", "wb") as fp:
+        #    fp.write(wide_x)
+        #with open("b.png", "wb") as fp:
+        #    fp.write(wide_y)
 
 
 

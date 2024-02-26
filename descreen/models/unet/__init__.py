@@ -44,7 +44,7 @@ def fit_to_smaller_add(x, y):
 
 
 class UNetLikeModelLevel(AbsModel):
-    def __init__(self, channels=256, N=2, bottom=False):
+    def __init__(self, channels=256, N=4, large_k=13, bottom=False):
         super().__init__()
         self.bottom = bottom
         if not self.bottom:
@@ -55,7 +55,7 @@ class UNetLikeModelLevel(AbsModel):
         #self.conv2 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=0)
         #self.a2 = nn.LeakyReLU(0.1)
         #self.conv3 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=0)
-        self.blocks = nn.ModuleList([ResidualBlock(channels, activation=nn.LeakyReLU(0.1)) for _ in range(N)])
+        self.blocks = nn.ModuleList([ResidualBlock(channels, ksize=large_k, activation=nn.LeakyReLU(0.1)) for _ in range(N)])
         #self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
 
 
@@ -72,7 +72,7 @@ class UNetLikeModelLevel(AbsModel):
 
     def input_size(self, output_size):
         for block in self.blocks:
-            output_size = block.input(output_size)
+            output_size = block.input_size(output_size)
         s = input_size(output_size, 3)
         if not self.bottom:
             s = s // 2 + (self.lanczos_n * 2)
@@ -93,7 +93,7 @@ class UNetLikeModelLevel(AbsModel):
 
 
 class UNetLikeModel(AbsModel):
-    def __init__(self, channels=128, residual=False):
+    def __init__(self, channels=128):
         super().__init__()
         #self.residual = residual
         self.upper_block = UNetLikeModelLevel(channels)

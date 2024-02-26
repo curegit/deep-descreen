@@ -2,20 +2,27 @@ import sys
 import torch
 from io import BytesIO
 from .models.unet import UNetLikeModel
+from .models.simple import TopLevelModel
 from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 
 import numpy as np
 
+from .training import model
+
 def main():
     device = "cpu"
 
-    model = UNetLikeModel()
+    from torch.optim.swa_utils import AveragedModel
+    global model
+    model1 = AveragedModel(model)
+    model = model1
     model.load_state_dict(torch.load(sys.argv[1]))
 
 
     model.to(device)
     model.eval()
     print(model)
+    model = model.module
 
     patch_size = model.output_size(512)
     #img = read_uint16_image(sys.argv[3])
@@ -44,7 +51,7 @@ def main():
         yy = y.detach().cpu().numpy()
         print(y.shape)
         res[:, k, l] = yy[0]
-        break
+        #break
     buf = BytesIO()
     save_image(res, buf, prefer16=True)
     r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=False)

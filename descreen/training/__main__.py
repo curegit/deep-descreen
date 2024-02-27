@@ -4,8 +4,6 @@ from . import train
 import sys
 import torch
 from io import BytesIO
-from ..models.unet import UNetLikeModel
-from ..models.simple import TopLevelModel
 from ..image import load_image, save_image, magick_wide_png, magick_srgb_png
 import numpy as np
 import sys

@@ -10,7 +10,7 @@ from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
 
 
-class HalftonePairDataset(Dataset[ndarray]):
+class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
     extensions = ["png", "jpg", "jpeg", "jpe", "jp2", "bmp", "dib", "tif", "tiff", "webp", "avif"]
 
@@ -66,15 +66,14 @@ class HalftonePairDataset(Dataset[ndarray]):
         # 角度バリエーション
         angles = random.choice(self.cmyk_angles)
         theta = random.random() * 90
-        angles = tuple(a + theta for a in angles)
+        aug_angles = tuple(a + theta for a in angles)
 
         #
 
-        halftone = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.8f}", "-a"] + [str(a) for a in angles] + ["-c", "rel", "-C", self.cmyk_profile])
-        norm = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-K", "-c", "rel", "-C", self.cmyk_profile])
+        halftone = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.8f}", "-a"] + [str(a) for a in aug_angles] + ["-c", "rel", "-C", str(self.cmyk_profile)])
+        norm = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-K", "-c", "rel", "-C", str(self.cmyk_profile)])
 
         #
-        cmds = []
         wide_x = magick_wide_png(halftone, relative=True)
         wide_y = magick_wide_png(norm, relative=True)
 
@@ -96,7 +95,7 @@ class HalftonePairDataset(Dataset[ndarray]):
         return HalftonePairTensorDataset(self)
 
 
-class HalftonePairTensorDataset(Dataset[Tensor]):
+class HalftonePairTensorDataset(Dataset[tuple[Tensor, Tensor]]):
     def __init__(self, base_dataset: HalftonePairDataset) -> None:
         super().__init__()
         self.base = base_dataset

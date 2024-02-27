@@ -1,10 +1,11 @@
-
 from typing import TypeVar
 
 T = TypeVar("T")
 
+
 def unpad(x: T, n: int) -> T:
     return x[..., n:-n, n:-n]
+
 
 def fit_to_smaller(x, y):
     *_, h1, w1 = x.shape
@@ -29,3 +30,8 @@ def fit_to_smaller(x, y):
     y = y[:, :, h2_start:h2_end, w2_start:w2_end]
 
     return x, y
+
+
+def fit_to_smaller_add(x, y):
+    a, b = fit_to_smaller(x, y)
+    return a + b

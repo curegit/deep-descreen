@@ -8,11 +8,14 @@ from torch.utils.data import DataLoader
 
 from .data import HalftonePairDataset
 from .loss import total_variation
-from ..models.unet import UNetLikeModel
-from ..models.simple import TopLevelModel
+
+from ..networks.models.unet import UNetLikeModel
+from ..networks.models.basic import TopLevelModel
+
 model = UNetLikeModel()
 ac = torch.nn.functional.leaky_relu
-#model = TopLevelModel(128, ac, 8)
+# model = TopLevelModel(128, ac, 8)
+
 
 def train(model, train_data_dir, valid_data_dir, device=None):
     model.to(device)
@@ -22,10 +25,10 @@ def train(model, train_data_dir, valid_data_dir, device=None):
 
     patch_size = 364
     loss_fn = nn.MSELoss()
-    #loss_fn = nn.L1Loss()
+    # loss_fn = nn.L1Loss()
     optimizer = torch.optim.RAdam(model.parameters(), lr=0.001)
-    #optimizer = torch.optim.SGD(model.parameters(), lr=0.002)
-    #optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.002)
+    # optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
 
     p = model.reduced_padding(patch_size)
     print(p)
@@ -36,11 +39,8 @@ def train(model, train_data_dir, valid_data_dir, device=None):
     training_data = HalftonePairDataset(train_data_dir, pro, patch_size, p)
     valid_data = HalftonePairDataset(valid_data_dir, pro, patch_size, p)
 
-
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
     valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
-
-
 
     def train_loop(iters: int):
         i = 0
@@ -56,35 +56,35 @@ def train(model, train_data_dir, valid_data_dir, device=None):
                 if i >= iters:
                     break
             else:
-                #valid_step()
-                #test_step()
+                # valid_step()
+                # test_step()
                 continue
-            #test_step()
+            # test_step()
             break
 
+    def train_step(x, y):
+        if False:
+            loss = None
 
-    def train_step(x, y ):
-            if False:
-                loss = None
-                def clos():
-                    global loss
-                    pred = model(x)
-                    loss = loss_fn(pred, y)
-                    print(f"loss: {loss}")
-                    # Backpropagation
-                    optimizer.zero_grad()
-                    loss.backward()
-                    return loss
-
-                optimizer.step(clos)
-            else:
+            def clos():
+                global loss
                 pred = model(x)
-                loss = loss_fn(pred, y) + (0.5 * total_variation(pred)).mean()
+                loss = loss_fn(pred, y)
+                print(f"loss: {loss}")
+                # Backpropagation
                 optimizer.zero_grad()
                 loss.backward()
-                print(f"loss: {loss}")
-                optimizer.step()
-                amodel.update_parameters(model)
+                return loss
+
+            optimizer.step(clos)
+        else:
+            pred = model(x)
+            loss = loss_fn(pred, y) + (0.5 * total_variation(pred)).mean()
+            optimizer.zero_grad()
+            loss.backward()
+            print(f"loss: {loss}")
+            optimizer.step()
+            amodel.update_parameters(model)
 
     try:
         train_loop(5000)
@@ -92,12 +92,10 @@ def train(model, train_data_dir, valid_data_dir, device=None):
         pass
     return amodel
 
+    # if i % 100 == 0:
+    # loss, current = loss.item(), (i + 1) * len(X)
 
-        #if i % 100 == 0:
-            #loss, current = loss.item(), (i + 1) * len(X)
-
-            #print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-
+    # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 
 def valid_step(dataloader, model, loss_fn, device):

@@ -55,15 +55,19 @@ class ResidualBlock(AbsModule):
     def __init__(self, in_channels, ksize, activation):
         super(ResidualBlock, self).__init__()
         self.ksize = ksize
+        self.pointwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.activation0 = activation
         self.depthwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=ksize, groups=in_channels, padding=0)
         self.activation1 = activation
         self.full_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
         self.activation2 = activation
-        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
+        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
 
     def forward(self, x):
         residual = x
-        out = self.depthwise_conv(x)
+        out = self.pointwise_conv(x)
+        out = self.activation0(out)
+        out = self.depthwise_conv(out)
         out = self.activation1(out)
         out = self.full_conv(out)
         out = self.activation2(out)

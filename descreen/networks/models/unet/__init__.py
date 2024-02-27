@@ -56,8 +56,8 @@ class UNetLikeModel(AbsModule):
     def __init__(self, channels=128):
         super().__init__()
         # self.residual = residual
-        self.upper_block = UNetLikeModelLevel(channels)
-        self.lower_block = UNetLikeModelLevel(channels, bottom=True)
+        self.upper_block = UNetLikeModelLevel(channels, N=8, large_k=21)
+        self.lower_block = UNetLikeModelLevel(channels, N=4, large_k=9, bottom=True)
         self.down = nn.AvgPool2d(kernel_size=2, stride=2)
         # self.block1 = UNetLikeModelLevel(channels)
         # self.av2 = nn.AvgPool2d(kernel_size=2, stride=2)

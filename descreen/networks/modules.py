@@ -61,7 +61,7 @@ class ResidualBlock(AbsModule):
         self.activation1 = activation
         self.full_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
         self.activation2 = activation
-        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
 
     def forward(self, x):
         residual = x

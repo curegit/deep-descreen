@@ -1,11 +1,17 @@
+import json
+import numpy as np
+import torch
+from pathlib import Path
 from abc import ABC, abstractmethod
-from numpy import ndarray, pad
+from numpy import ndarray
 from torch import Tensor
 from torch.nn import Module
 from ..utilities import range_chunks
 
 
-class AbsModule(ABC, Module):
+class AbsModule(Module, ABC):
+
+
     @abstractmethod
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError()
@@ -43,7 +49,7 @@ class AbsModule(ABC, Module):
 
         qh = input_patch_size - self.patch_slices_remainder(height + 2 * p, input_patch_size, p)
         qw = input_patch_size - self.patch_slices_remainder(width + 2 * p, input_patch_size, p)
-        y = pad(x, (*([(0, 0)] * (x.ndim - 2)), (p, qh + p), (p, qw + p)), mode=pad_mode, **kwargs)
+        y = np.pad(x, (*([(0, 0)] * (x.ndim - 2)), (p, qh + p), (p, qw + p)), mode=pad_mode, **kwargs)
         h_crop = slice(p, height + p)
         w_crop = slice(p, width + p)
         return y, self.patch_slices(height + qh, width + qw, out_patch_size, p), (h_crop, w_crop)

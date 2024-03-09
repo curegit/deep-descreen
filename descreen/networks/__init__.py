@@ -53,6 +53,7 @@ class AbsModule(ABC, Module):
             for w_start, w_stop in range_chunks(width, output_patch_size):
                 h_pad = padding #self.required_padding(h_stop - h_start)
                 w_pad = padding #self.required_padding(w_stop - w_start)
+                print(h_stop - h_start, w_stop - w_start, output_patch_size)
                 assert h_stop - h_start == w_stop - w_start == output_patch_size
                 h_slice = slice(h_start - h_pad + padding, h_stop + h_pad + padding)
                 w_slice = slice(w_start - w_pad + padding, w_stop + w_pad + padding)
@@ -62,9 +63,9 @@ class AbsModule(ABC, Module):
 
     def patch_slices_remainder(self, length: int, input_patch_size: int, padding: int):
         cur = 0
-        while length - cur <= input_patch_size:
+        while length - cur >= input_patch_size:
             cur += input_patch_size - padding * 2
-        return input_patch_size % (length - cur)
+        return length - cur
 
 
         #input_size = self.input_size(output_patch_size)

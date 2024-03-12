@@ -5,23 +5,25 @@ from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 
 import numpy as np
 
-from .training import model
+#from .training import model
 
+from .networks.models import DescreenModel
+from .networks.models import pull
 
 def main():
     device = "cpu"
 
-    from torch.optim.swa_utils import AveragedModel
+    #from torch.optim.swa_utils import AveragedModel
 
-    global model
-    model1 = AveragedModel(model)
-    model = model1
-    model.load_state_dict(torch.load(sys.argv[1]))
+    #global model
+
+    model = DescreenModel.deserialize(sys.argv[1])
+
+    #model.load_state_dict()
 
     model.to(device)
     model.eval()
     print(model)
-    model = model.module
 
     # img = read_uint16_image(sys.argv[3])
 
@@ -39,7 +41,7 @@ def main():
         y = z.detach().cpu().numpy()[0]
         print(y.shape)
         dest[:, k, l] = y
-    result = dest[:, *crop]
+    result = dest[:, crop[0], crop[1]]
 
     buf = BytesIO()
     save_image(result, buf, prefer16=True)

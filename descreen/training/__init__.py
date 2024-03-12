@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from .data import HalftonePairDataset
 from .loss import total_variation
 
+from ..networks.models import DescreenModel
 from ..networks.models.unet import UNetLikeModel
 from ..networks.models.basic import TopLevelModel
 
@@ -17,7 +18,7 @@ ac = torch.nn.functional.leaky_relu
 # model = TopLevelModel(128, ac, 8)
 
 
-def train(model, train_data_dir, valid_data_dir, device=None):
+def train(model, train_data_dir, valid_data_dir, device=None) -> DescreenModel:
     model.to(device)
     model.train()
     amodel = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(0.999))
@@ -87,10 +88,13 @@ def train(model, train_data_dir, valid_data_dir, device=None):
             amodel.update_parameters(model)
 
     try:
-        train_loop(5000)
+        train_loop(3000)
     except KeyboardInterrupt:
         pass
-    return amodel
+    rm = amodel.module
+    print(rm)
+    assert isinstance(rm, DescreenModel)
+    return rm
 
     # if i % 100 == 0:
     # loss, current = loss.item(), (i + 1) * len(X)

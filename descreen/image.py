@@ -118,9 +118,9 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
         e.returncode
         match e.stderr:
             case str() as stderr:
-                pass
+                print(stderr)
             case bytes() as bstderr:
-                bstderr.decode()
+                print(bstderr.decode())
         raise
 
 

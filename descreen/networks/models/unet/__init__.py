@@ -1,4 +1,5 @@
 from torch import nn, cat
+from .. import DescreenModel
 from ... import AbsModule
 from ...modules import ResidualBlock, Lanczos2xUpsampler
 from ...utils import input_size, output_size
@@ -31,9 +32,7 @@ class UNetLikeModelLevel(AbsModule):
             out = block(out)
         return out
 
-    @property
-    def multiple_of(self) -> int:
-        return 2
+
 
     def input_size(self, output_size):
         for block in self.blocks:
@@ -52,7 +51,7 @@ class UNetLikeModelLevel(AbsModule):
         return hn
 
 
-class UNetLikeModel(AbsModule):
+class UNetLikeModel(DescreenModel):
     def __init__(self, channels=128):
         super().__init__()
         # self.residual = residual
@@ -72,6 +71,15 @@ class UNetLikeModel(AbsModule):
         h1 = self.lower_block(z)
         h2 = self.upper_block(x, h1)
         return fit_to_smaller_add(x, self.out(h2))
+
+    @classmethod
+    def alias(cls) -> str:
+        print(cls.__name__)
+        return cls.__name__
+
+    @property
+    def multiple_of(self) -> int:
+        return 2
 
     def input_size(self, s):
         return self.lower_block.input_size(self.upper_block.input_size(input_size(s, 3))) * 2

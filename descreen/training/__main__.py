@@ -21,11 +21,7 @@ def main():
 
     amodel = train(model, "data", "data", device=device)
     amodel.to(torch.device("cpu"))
-    sfbytes = safetensors.torch.save(amodel.state_dict(), metadata=None)
-    cmodel.save()
-
-
-    torch.save(, "model_weights.bin")
+    amodel.serialize("model_weights.ddbin")
 
 
 if __name__ == "__main__":

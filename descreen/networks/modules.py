@@ -2,17 +2,18 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 from . import AbsModule
 from .utils import input_size, output_size
 from ..utilities.array import fit_to_smaller_add
 
 
-def lanczos(x, n):
-    return 0.0 if abs(x) > n else np.sinc(x) * np.sinc(x / n)
+def lanczos(x: float, n: int) -> float:
+    return 0.0 if abs(x) > n else (np.sinc(x) * np.sinc(x / n)).item()
 
 
 class Lanczos2xUpsampler(AbsModule):
-    def __init__(self, n=3, pad=True):
+    def __init__(self, n: int = 3, pad: bool = True) -> None:
         super().__init__()
         start = np.array([lanczos(i + 0.25, n) for i in range(-n, n)])
         end = np.array([lanczos(i + 0.75, n) for i in range(-n, n)])
@@ -27,7 +28,7 @@ class Lanczos2xUpsampler(AbsModule):
         self.n = n
         self.pad = pad
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         b, c, h, w = x.shape
         h1 = x.view(b * c, 1, h, w)
         if self.pad:
@@ -41,29 +42,29 @@ class Lanczos2xUpsampler(AbsModule):
         else:
             return h4.view(b, c, (h - 2 * self.n) * 2, (w - 2 * self.n) * 2)
 
-    def input_size(self, output_size):
+    def input_size(self, output_size: int) -> int:
         if self.pad:
             return output_size
         else:
             return output_size // 2 + (self.n * 2)
 
-    def output_size(self, input_size):
+    def output_size(self, input_size: int) -> int:
         return (input_size - (self.n * 2)) * 2
 
 
 class ResidualBlock(AbsModule):
-    def __init__(self, in_channels, ksize, activation):
-        super(ResidualBlock, self).__init__()
+    def __init__(self, channels, ksize, activation):
+        super().__init__()
         self.ksize = ksize
-        self.pointwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.pointwise_conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
         self.activation0 = activation
-        self.depthwise_conv = nn.Conv2d(in_channels, in_channels, kernel_size=ksize, groups=in_channels, padding=0)
+        self.depthwise_conv = nn.Conv2d(channels, channels, kernel_size=ksize, groups=channels, padding=0)
         self.activation1 = activation
-        self.full_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
+        self.full_conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
         self.activation2 = activation
-        self.conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=0)
+        self.conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         residual = x
         out = self.pointwise_conv(x)
         out = self.activation0(out)
@@ -74,8 +75,8 @@ class ResidualBlock(AbsModule):
         out = self.conv(out)
         return fit_to_smaller_add(residual, out)
 
-    def input_size(self, output_size):
+    def input_size(self, output_size: int) -> int:
         return input_size(input_size(input_size(output_size, 3), 3), self.ksize)
 
-    def output_size(self, input_size):
+    def output_size(self, input_size: int) -> int:
         return output_size(output_size(output_size(input_size, self.ksize), 3), 3)

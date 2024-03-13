@@ -11,7 +11,6 @@ from ...utilities import range_chunks
 from ...utilities.filesys import resolve_path, self_relpath as rel
 
 
-
 files = {
     "basic": rel("./unet/model.ddbin.xz"),
 }
@@ -23,8 +22,6 @@ def pull(name: str):
     return DescreenModel.load(files[name])
 
 
-
-
 class DescreenModelType(ABCMeta):
 
     aliases = {}
@@ -33,11 +30,11 @@ class DescreenModelType(ABCMeta):
         cls = super().__new__(meta, name, bases, attributes, **kwargs)
         print("new")
         try:
-            #alias = attributes["alias"]()
+            # alias = attributes["alias"]()
             alias = cls.alias()
         except Exception:
             raise
-            #return cls
+            # return cls
         if alias in DescreenModelType.aliases:
             raise RuntimeError()
         DescreenModelType.aliases[alias] = cls
@@ -131,7 +128,8 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
             (i,) = struct.unpack(a := "!H", fp.read(struct.calcsize(a)))
             alias = fp.read(i).decode()
             cls = DescreenModelType.by_alias(alias)
-            return cls.load(fp)
+            model: DescreenModel = cls.load(fp)
+        return model
 
     def serialize_weight(self) -> bytes:
         return safetensors.torch.save(self.state_dict(), metadata=None)
@@ -152,6 +150,7 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
             fp.write(struct.pack("!I", len(js)))
             fp.write(js)
             fp.write(self.serialize_weight())
+
 
 from .unet import UNetLikeModel
 

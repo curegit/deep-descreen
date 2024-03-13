@@ -1,9 +1,14 @@
-
 from torch import Tensor
 
-def total_variation(x: Tensor) -> Tensor:
-    b, c, h, w = x.shape
-    pixel_dif1 = x[..., 1:, :] - x[..., :-1, :]
-    pixel_dif2 = x[..., :, 1:] - x[..., :, :-1]
-    reduce_axes = (-3, -2, -1)
-    return (pixel_dif1.abs().sum(dim=reduce_axes) + pixel_dif2.abs().sum(dim=reduce_axes)) / (c * h * w * b)
+
+def total_variation(x: Tensor, mean=True) -> Tensor:
+    *b, c, h, w = x.shape
+    assert h >= 2 and w >= 2
+    diff1 = (x[..., 1:, :] - x[..., :-1, :]).abs()
+    diff2 = (x[..., :, 1:] - x[..., :, :-1]).abs()
+    reduce = (-3, -2, -1)
+    loss = (diff1.sum(dim=reduce) + diff2.sum(dim=reduce)) / (c * (h - 1) * (w - 1))
+    if mean:
+        return loss.mean()
+    else:
+        return loss.sum()

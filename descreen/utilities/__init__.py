@@ -1,6 +1,15 @@
+import operator as op
+from functools import reduce
+
+
+def prod(xs, start=1):
+    return reduce(op.mul, xs, start)
+
+
 from collections.abc import Iterable
 
 from typing import TypeVar
+
 
 T = TypeVar("T")
 

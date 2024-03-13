@@ -32,8 +32,6 @@ class UNetLikeModelLevel(AbsModule):
             out = block(out)
         return out
 
-
-
     def input_size(self, output_size):
         for block in self.blocks:
             output_size = block.input_size(output_size)

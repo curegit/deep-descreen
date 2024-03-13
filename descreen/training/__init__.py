@@ -80,7 +80,7 @@ def train(model, train_data_dir, valid_data_dir, device=None) -> DescreenModel:
             optimizer.step(clos)
         else:
             pred = model(x)
-            loss = loss_fn(pred, y) + (0.5 * total_variation(pred)).mean()
+            loss = loss_fn(pred, y) + 10 * total_variation(pred)
             optimizer.zero_grad()
             loss.backward()
             print(f"loss: {loss}")

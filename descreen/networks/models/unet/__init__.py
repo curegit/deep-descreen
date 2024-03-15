@@ -32,7 +32,7 @@ class UNetLikeModelLevel(AbsModule):
             out = block(out)
         return out
 
-    def input_size(self, output_size):
+    def input_size_unchecked(self, output_size):
         for block in self.blocks:
             output_size = block.input_size(output_size)
         s = input_size(output_size, 3)
@@ -40,7 +40,7 @@ class UNetLikeModelLevel(AbsModule):
             s = self.up.input_size(s)
         return s
 
-    def output_size(self, input_size):
+    def output_size_unchecked(self, input_size):
         if not self.bottom:
             input_size = self.up.output_size(input_size)
         hn = output_size(input_size, 3)
@@ -79,8 +79,8 @@ class UNetLikeModel(DescreenModel):
     def multiple_of(self) -> int:
         return 2
 
-    def input_size(self, s):
+    def input_size_unchecked(self, s):
         return self.lower_block.input_size(self.upper_block.input_size(input_size(s, 3))) * 2
 
-    def output_size(self, s):
+    def output_size_unchecked(self, s):
         return output_size(self.upper_block.output_size(self.lower_block.output_size(s // 2)), 3)

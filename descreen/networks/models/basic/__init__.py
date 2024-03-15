@@ -21,11 +21,11 @@ class TopLevelModel(AbsModule):
         out = self.conv2(out)
         return fit_to_smaller_add(residual, out)
 
-    def input_size(self, output_size):
+    def input_size_unchecked(self, output_size):
         n = 1024 - self.output_size(1024)
         return output_size + n
 
-    def output_size(self, input_size):
+    def output_size_unchecked(self, input_size):
         mock_input = torch.zeros((1, 3, input_size, input_size), device=next(self.parameters()).device)
         mock_output = self(mock_input)
         _, _, height, width = mock_output.size()

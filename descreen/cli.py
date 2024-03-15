@@ -12,6 +12,10 @@ from .networks.models import pull
 
 
 def main():
+    # dest_group = parser.add_mutually_exclusive_group()
+    # dest_group.add_argument("-m", "--model", metavar="NAME" action="store_true", help="send output to standard output")
+    # dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=nonempty, default=".", help="save output images in DIR directory")
+    # dest_group.add_argument("-x", "--onnx", metavar="FILE", type=nonempty, default=".", help="save output images in DIR directory")
     device = "cpu"
     model = DescreenModel.deserialize(sys.argv[1])
     model.to(device)
@@ -23,7 +27,7 @@ def main():
     with open(sys.argv[2], "rb") as fp:
         img = load_image(magick_wide_png(fp.read(), relative=True), assert16=True)
 
-    padded, patches, crop = model.patch(img, 1024)
+    padded, patches, crop = model.patch(img, 512)
     dest = np.ones_like(padded, dtype=np.float32)
     for (j, i), (k, l) in patches:
         print(k)

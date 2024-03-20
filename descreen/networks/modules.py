@@ -38,13 +38,13 @@ class Lanczos2xUpsampler(AbsModule):
         else:
             return h4.view(b, c, (h - 2 * self.n) * 2, (w - 2 * self.n) * 2)
 
-    def input_size(self, output_size: int) -> int:
+    def input_size_unchecked(self, output_size: int) -> int:
         if self.pad:
             return output_size
         else:
             return output_size // 2 + (self.n * 2)
 
-    def output_size(self, input_size: int) -> int:
+    def output_size_unchecked(self, input_size: int) -> int:
         return (input_size - (self.n * 2)) * 2
 
     @staticmethod
@@ -75,8 +75,8 @@ class ResidualBlock(AbsModule):
         out = self.conv(out)
         return fit_to_smaller_add(residual, out)
 
-    def input_size(self, output_size: int) -> int:
+    def input_size_unchecked(self, output_size: int) -> int:
         return input_size(input_size(input_size(output_size, 3), 3), self.ksize)
 
-    def output_size(self, input_size: int) -> int:
+    def output_size_unchecked(self, input_size: int) -> int:
         return output_size(output_size(output_size(input_size, self.ksize), 3), 3)

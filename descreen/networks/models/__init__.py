@@ -12,14 +12,14 @@ from ...utilities.filesys import resolve_path, self_relpath as rel
 
 
 files = {
-    "basic": rel("./unet/model.ddbin.xz"),
+    "basic": rel("./unet/model.ddbin"),
 }
 
 names = list(files.keys())
 
 
 def pull(name: str):
-    return DescreenModel.load(files[name])
+    return DescreenModel.deserialize(files[name])
 
 
 class DescreenModelType(ABCMeta):
@@ -71,6 +71,8 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
             raise RuntimeError()
         out_patch_size = self.output_size(input_patch_size)
         p = self.required_padding(out_patch_size)
+        assert out_patch_size > 0
+        print(p)
         height, width = x.shape[-2:]
 
         # self.patch_slices(height, width, out_patch_size, p)
@@ -106,11 +108,18 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
 
     @classmethod
     def load(cls, byteslike: bytes | IOBase):
-        (l,) = struct.unpack(f := "!I", byteslike.read(struct.calcsize(f)))
-        js = byteslike.read(l).decode()
+        match byteslike:
+            case bytes() as bin:
+                buf = BytesIO(bin)
+            case IOBase() as buf:
+                pass
+            case _:
+                raise TypeError()
+        (l,) = struct.unpack(f := "!I", buf.read(struct.calcsize(f)))
+        js = buf.read(l).decode()
         kwargs = json.loads(js)
         model = cls(**kwargs)
-        model.load_weight(byteslike.read())
+        model.load_weight(buf.read())
         return model
 
     @staticmethod

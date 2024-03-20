@@ -1,11 +1,13 @@
+import io
 import random
+import numpy as np
 import torch
 from pathlib import Path
 from numpy import ndarray
 from torch import Tensor
 from torch.utils.data import Dataset
 from ..image import load_image, save_image, halftonecv, magick_wide_png
-from ..utilities import flatten
+from ..utilities import once, flatmap
 from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
 
@@ -24,72 +26,89 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         (165, 45, 90, 105),
     ]
 
-    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path, patch_size: int, reduced_padding: int, *, augment: bool = False) -> None:
+    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")) -> None:
         super().__init__()
         self.dirpath = resolve_path(dirpath, strict=True)
+        self.debug_dir = resolve_path(debug_dir, strict=True)
         self.cmyk_profile = resolve_path(cmyk_profile, strict=True)
         self.reduced_padding = reduced_padding
         self.patch_size = patch_size
-        self.files = flatten(relaxed_glob_recursively(dirpath, ext) for ext in self.extensions)
+        self.debug = debug
+        self.augment = augment
+        self.files = flatmap(relaxed_glob_recursively(dirpath, ext) for ext in self.extensions)
 
     def __len__(self) -> int:
         return len(self.files)
 
     def __getitem__(self, idx: int) -> tuple[ndarray, ndarray]:
         path = self.files[idx]
-
-        i = load_image(path, transpose=False, normalize=False)
-        height, width = i.shape[:2]
-        margin = 8
-        crop_size = self.patch_size + margin
-        # print(random.random())
-        left = random.randrange(width - crop_size)
-        top = random.randrange(height - crop_size)
-
-        right = left + crop_size
-        bottom = top + crop_size
-        i = i[top:bottom, left:right, :]
-        # img = img.crop((left, upper, right, lower))
+        img = load_image(path, transpose=False, normalize=False)
+        assert img.ndim == 3
+        assert img.shape[2] == 3
+        height, width = img.shape[:2]
+        safe_margin = 7
+        crop_size = self.patch_size + safe_margin * 2
         assert height >= crop_size
         assert width >= crop_size
 
-        import io
+        # Random crop
+        left = random.randrange(width - crop_size)
+        top = random.randrange(height - crop_size)
+        right = left + crop_size
+        bottom = top + crop_size
+        patch = img[top:bottom, left:right, :]
 
-        buf = io.BytesIO()
-        save_image(i, buf, transposed=False, prefer16=False)
-        # img.save(buf, format='PNG')
+        # Augment (Pre)
+        if self.augment:
+            ops = [
+                lambda x: x,
+                lambda x: np.rot90(x, 1, (0, 1)),
+                lambda x: np.rot90(x, 2, (0, 1)),
+                lambda x: np.rot90(x, 3, (0, 1)),
+                lambda x: np.flip(x, 0),
+                lambda x: np.flip(x, 1),
+                lambda x: np.flip(np.rot90(x, 1, (0, 1)), 0),
+                lambda x: np.flip(np.rot90(x, 1, (0, 1)), 1),
+            ]
+            patch = random.choice(ops)(patch)
 
-        img_in_bytes = buf.getvalue()
+        # Halftone
+        buffer = io.BytesIO()
+        save_image(patch, buffer, transposed=False, prefer16=False)
+        patch_bytes = buffer.getvalue()
+        pitch = random.uniform(self.min_pitch, self.max_pitch)  # ピッチバリエーション
+        angles = tuple(a + random.random() * 90 for a in random.choice(self.cmyk_angles))  # 角度バリエーション
+        color_cmds = ["-m", "CMYK", "-o", "CMYK", "-c", "rel", "-C", str(self.cmyk_profile), "-T"]
+        resampler = random.choice(["linear", "lanczos2", "lanczos3", "spline36"])
+        halftone_patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-F", resampler, "-p", f"{pitch:.12f}", "-a", *(f"{a:.12f}" for a in angles)])
+        patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-K"])
 
-        # ピッチバリエーション
-        pitch = random.uniform(self.min_pitch, self.max_pitch)
-        # 角度バリエーション
-        angles = random.choice(self.cmyk_angles)
-        theta = random.random() * 90
-        aug_angles = tuple(a + theta for a in angles)
+        # To RGB
+        wide_x = magick_wide_png(halftone_patch_cmyk, relative=True)
+        wide_y = magick_wide_png(patch_cmyk, relative=True)
 
-        #
+        # Augment (Post)
+        if self.augment:
+            pass
 
-        halftone = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-p", f"{pitch:.8f}", "-a"] + [str(a) for a in aug_angles] + ["-c", "rel", "-C", str(self.cmyk_profile)])
-        norm = halftonecv(img_in_bytes, ["-m", "CMYK", "-o", "CMYK", "-K", "-c", "rel", "-C", str(self.cmyk_profile)])
+        # Debug
+        if self.debug:
+            self.save_example_pair(idx, wide_x, wide_y)
 
-        #
-        wide_x = magick_wide_png(halftone, relative=True)
-        wide_y = magick_wide_png(norm, relative=True)
-
-        # debug
-        # with open("a.png", "wb") as fp:
-        #    fp.write(wide_x)
-        # with open("b.png", "wb") as fp:
-        #    fp.write(wide_y)
-
-        #
+        # To array
         x = load_image(wide_x, orient=False, assert16=True)
         y = load_image(wide_y, orient=False, assert16=True)
-        #
-        x = unpad(x, margin)
-        y = unpad(y, margin + self.reduced_padding)
+        x = unpad(x, safe_margin)
+        y = unpad(y, safe_margin + self.reduced_padding)
+        assert x.shape[1] == x.shape[2] == y.shape[1] == y.shape[2] == self.patch_size
         return x, y
+
+    @once
+    def save_example_pair(self, idx: int, x_png: bytes, y_png: bytes) -> None:
+        with open(self.debug_dir / f"example-{idx}-x.png", "wb") as fp:
+            fp.write(x_png)
+        with open(self.debug_dir / f"example-{idx}-y.png", "wb") as fp:
+            fp.write(y_png)
 
     def as_tensor(self):
         return HalftonePairTensorDataset(self)

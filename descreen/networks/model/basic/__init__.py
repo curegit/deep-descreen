@@ -21,6 +21,14 @@ class TopLevelModel(AbsModule):
         out = self.conv2(out)
         return fit_to_smaller_add(residual, out)
 
+    @classmethod
+    def alias(cls) -> str:
+        return "basic"
+
+    @property
+    def multiple_of(self) -> int:
+        return 1
+
     def input_size_unchecked(self, output_size):
         n = 1024 - self.output_size(1024)
         return output_size + n

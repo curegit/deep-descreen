@@ -6,7 +6,7 @@ from pathlib import Path
 from numpy import ndarray
 from torch import Tensor
 from torch.utils.data import Dataset
-from ..image import load_image, save_image, halftonecv, magick_wide_png
+from ..image import load_image, save_image, halftonecv, magick_png, magick_wide_png
 from ..utilities import once, flatmap
 from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
@@ -89,7 +89,9 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
         # Augment (Post)
         if self.augment:
-            pass
+            if random.random() < 0.6:
+                sigma = random.random() * 0.4 + 0.01
+                wide_x = magick_png(wide_x, ["-gaussian-blur", f"1x{sigma:.4f}"], png48=True)
 
         # Debug
         if self.debug:

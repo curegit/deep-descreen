@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from . import patch_size, batch_size
 from .loss import descreen_loss
 from .data import HalftonePairDataset
-from ..networks.models import DescreenModel
+from ..networks.model import DescreenModel
 
 
 def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir: str | Path, device=None) -> T:
@@ -25,8 +25,8 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
     print("OutputSize:", model.output_size(patch_size))
 
     pro = "JapanColor2011Coated.icc"
-    training_data = HalftonePairDataset(train_data_dir, pro, patch_size, p)
-    valid_data = HalftonePairDataset(valid_data_dir, pro, patch_size, p)
+    training_data = HalftonePairDataset(train_data_dir, pro, patch_size, p).as_tensor()
+    valid_data = HalftonePairDataset(valid_data_dir, pro, patch_size, p).as_tensor()
 
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
     valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)

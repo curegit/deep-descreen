@@ -72,8 +72,7 @@ class UNetLikeModel(DescreenModel):
 
     @classmethod
     def alias(cls) -> str:
-        print(cls.__name__)
-        return cls.__name__
+        return "unet"
 
     @property
     def multiple_of(self) -> int:

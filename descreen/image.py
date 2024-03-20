@@ -47,30 +47,24 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True):
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
-                q = 2**16 - 1
+                qt = 2**16 - 1
                 dtype = np.uint16
             else:
-                q = 2**8 - 1
+                qt = 2**8 - 1
                 dtype = np.uint8
-            print(img)
-            a = np.rint(img * q).clip(0, q).astype(dtype)
+            arr = np.rint(img * qt).clip(0, qt).astype(dtype)
         case np.uint8 | np.uint16:
-            a = img
+            arr = img
         case _:
             raise ValueError()
-
     if transposed:
         # HxWxBGR にする
-        a = a.transpose(1, 2, 0)[:, :, [2, 1, 0]]
-
-    ok, bin = cv2.imencode(
-        ".png",
-        a,
-    )
+        arr = arr.transpose(1, 2, 0)[:, :, [2, 1, 0]]
+    ok, bin = cv2.imencode(".png", arr)
     if not ok:
         raise RuntimeError()
     buffer = bin.tobytes()
@@ -124,16 +118,19 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
         raise
 
 
-wide_profile = self_relpath("assets") / "WideGamutCompat-v4.icc"
+wide_profile: Path = self_relpath("assets") / "WideGamutCompat-v4.icc"
+
+srgb_profile: Path = self_relpath("assets") / "sRGB-v4.icc"
 
 
-def magick_wide_png(input_img: bytes, relative=True) -> bytes:
 
+
+def magick_wide_png(input_img: bytes, relative: bool = True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
     return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)], png48=True)
 
 
-def magick_srgb_png(input_img: bytes, relative=True, prefer48: bool = False, assume_wide=True) -> bytes:
-    srgb_profile = self_relpath("assets") / "sRGB-v4.icc"
+def magick_srgb_png(input_img: bytes, relative: bool = True, prefer48: bool = False, assume_wide: bool = True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
-    return magick_png(input_img, ["-profile", str(wide_profile), "-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)], png48=prefer48)
+    cmds = ["-profile", str(wide_profile), "-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
+    return magick_png(input_img, cmds, png48=prefer48)

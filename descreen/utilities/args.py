@@ -1,8 +1,9 @@
 import ast
+import typing
 
 
-def eqsign_kvpairs(string) -> dict[str]:
-    tree = ast.parse(f"dict({string})", mode="eval")
+def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
+    tree = ast.parse(f"func({string})", mode="eval")
     match tree.body:
         case ast.Call() as call:
             if call.args:

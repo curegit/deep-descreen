@@ -7,12 +7,12 @@ def identity[T](x: T) -> T:
     return x
 
 
-def once(func):
+def once[T](func: Callable[..., T]):
     fst = True
     result = None
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> T:
         nonlocal fst, result
         if fst:
             fst = False

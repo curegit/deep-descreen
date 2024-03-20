@@ -1,53 +1,63 @@
-import typer
+import sys
+import numpy as np
+import torch
+from io import BytesIO
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from .image import load_image, save_image, magick_wide_png, magick_srgb_png
+from .networks.model import DescreenModel, pull, names
+from .utilities.args import nonempty, fileinput
+
 
 def main():
-
-    	except KeyboardInterrupt:
-		eprint("KeyboardInterrupt")
-		exit_code = 130
-		return exit_code
-
-
-def con():
+    exit_code = 0
+    parser = ArgumentParser(
+        prog="descreen",
+        allow_abbrev=False,
+        formatter_class=ArgumentDefaultsHelpFormatter,
+        description=""
+    )
+    parser.add_argument("image", metavar="FILE", type=fileinput, help="describe directory")
+    dest_group = parser.add_mutually_exclusive_group()
+    dest_group.add_argument("-m", "--model", metavar="NAME", choices=names, default=names[0], help=f"send output to standard output {names}")
+    dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=nonempty, help="save output images in DIR directory")
+    dest_group.add_argument("-x", "--onnx", metavar="FILE", type=nonempty, help="save output images in DIR directory")
+    parser.add_argument("-q", "--quantize", "--depth", type=int, default=8, choices=[8, 16], help="color depth of output PNG")
+    args = parser.parse_args()
     device = "cpu"
 
-
-    #from .models import UNetLikeModel
-    model = UNetLikeModel()
-    model.load_state_dict(torch.load(sys.argv[2]))
-
-
+    if args.ddbin is not None:
+        model = DescreenModel.deserialize(args.ddbin)
+    elif args.onnx is not None:
+        # TODO
+        pass
+    else:
+        model = pull(args.name)
     model.to(device)
     model.eval()
     print(model)
 
-    patch_size = model.output_size(512)
-    #img = read_uint16_image(sys.argv[3])
+    # img = read_uint16_image(sys.argv[3])
 
-    with open(sys.argv[3], "rb") as fp:
-        i = load_image(magickpng(fp.read(), png48=True), assert16=True)
-
-
-    height, width = img.shape[1:3]
-    # TODO: 4倍数にあわせる
-    ppp_h = h % 512
-    ppp_w = w % 512
-    a_h = h + ppp_h
-    a_w = w + ppp_w
-    img = img.reshape((1, 3, h, w))
-    res = np.zeros((3, a_h, a_w), dtype="float32")
-    p = model.required_padding(patch_size)
-
-    img = np.pad(img, ((0, 0), (0, 0), (p, p + ppp_h), (p, p + ppp_w)), mode="symmetric")
-    for (j, i), (k, l) in model.patch_slices(a_h, a_w, patch_size):
-        print(k)
-        x = img[:, :, j, i]
-        t = torch.from_numpy(x.astype("float32"))
-        t = t.to(device)
-        y = model(t)
-        yy = y.detach().cpu().numpy()
+    if args.image is None:
+        in_bin = sys.stdin.buffer.read()
+    else:
+        with open(args.image, "rb") as fp:
+            in_bin = fp.read()
+    img = load_image(magick_wide_png(in_bin, relative=True), assert16=True)
+    padded, patches, crop = model.patch(img, 512)
+    dest = np.ones_like(padded, dtype=np.float32)
+    for (j, i), (k, l) in patches:
+        x = padded[:, j, i].astype(np.float32)
+        t = torch.from_numpy(x).reshape((1, *x.shape)).to(device)
+        z = model(t)
+        y = z.detach().cpu().numpy()[0]
         print(y.shape)
-        res[:, k, l] = yy[0]
-    res = res[:, :h, :w]
-    save_image(res, sys.argv[4])
-    #save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])
+        dest[:, k, l] = y
+    result = dest[:, crop[0], crop[1]]
+
+    buf = BytesIO()
+    save_image(result, buf, prefer16=True)
+    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.q == 16))
+    with open(sys.argv[3], "wb") as fp:
+        fp.write(r)
+    # save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

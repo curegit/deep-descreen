@@ -8,15 +8,11 @@ from .utils import input_size, output_size
 from ..utilities.array import fit_to_smaller_add
 
 
-def lanczos(x: float, n: int) -> float:
-    return 0.0 if abs(x) > n else (np.sinc(x) * np.sinc(x / n)).item()
-
-
 class Lanczos2xUpsampler(AbsModule):
     def __init__(self, n: int = 3, pad: bool = True) -> None:
         super().__init__()
-        start = np.array([lanczos(i + 0.25, n) for i in range(-n, n)])
-        end = np.array([lanczos(i + 0.75, n) for i in range(-n, n)])
+        start = np.array([self.lanczos(i + 0.25, n) for i in range(-n, n)])
+        end = np.array([self.lanczos(i + 0.75, n) for i in range(-n, n)])
         s = start / np.sum(start)
         e = end / np.sum(end)
         k1 = np.pad(s.reshape(1, n * 2) * s.reshape(n * 2, 1), ((0, 1), (0, 1)))
@@ -51,9 +47,13 @@ class Lanczos2xUpsampler(AbsModule):
     def output_size(self, input_size: int) -> int:
         return (input_size - (self.n * 2)) * 2
 
+    @staticmethod
+    def lanczos(x: float, n: int) -> float:
+        return 0.0 if abs(x) > n else (np.sinc(x) * np.sinc(x / n)).item()
+
 
 class ResidualBlock(AbsModule):
-    def __init__(self, channels, ksize, activation):
+    def __init__(self, channels, ksize, activation) -> None:
         super().__init__()
         self.ksize = ksize
         self.pointwise_conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)

@@ -1,0 +1,46 @@
+[project]
+name = "deep-descreen"
+description = ""
+keywords = ["image processing", "halftone"]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "AGPL-3.0"}
+maintainers = [
+  {name = "curegit", email = "contact@curegit.jp"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Environment :: GPU :: NVIDIA CUDA",
+  "Topic :: Multimedia :: Graphics :: Capture :: Scanners",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "License :: OSI Approved :: GNU Affero General Public License v3",
+]
+dynamic = ["version"]
+dependencies = [
+  "numpy >= 1.26.0",
+  "torch >= 2.2.1",
+  "safetensors >= 0.4.2",
+  "opencv-python >= 4.9.0",
+  "rich >= 13.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pip", "setuptools", "build", "twine", "mypy", "black", "halftone-converter"]
+
+[project.scripts]
+descreen = "descreen.cli:main"
+
+[project.urls]
+homepage = "https://github.com/curegit/deep-descreen"
+repository = "https://github.com/curegit/deep-descreen.git"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["descreen*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "descreen.__version__"}

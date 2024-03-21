@@ -19,8 +19,8 @@ def main() -> int:
     parser.add_argument("train", metavar="TRAIN_PATH", help="describe directory")
     parser.add_argument("valid", metavar="VALID_PATH")
     parser.add_argument("test", metavar="TEST_PATH")
-    parser.add_argument("-n", "--model-name", metavar="MODEL", type=str, choices=model_aliases, required=True, help="")
-    parser.add_argument("-p", "--model-params", metavar="KWARGS", type=eqsign_kvpairs, required=True, help="")
+    parser.add_argument("-n", "--model-name", dest="name", metavar="MODEL", type=str, choices=model_aliases, required=True, help="")
+    parser.add_argument("-p", "--model-params", dest="params", metavar="KWARGS", type=eqsign_kvpairs, required=True, help="")
     args = parser.parse_args()
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 

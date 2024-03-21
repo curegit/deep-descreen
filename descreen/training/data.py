@@ -102,7 +102,8 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         y = load_image(wide_y, orient=False, assert16=True)
         x = unpad(x, safe_margin)
         y = unpad(y, safe_margin + self.reduced_padding)
-        assert x.shape[1] == x.shape[2] == y.shape[1] == y.shape[2] == self.patch_size
+        assert x.shape[1] == x.shape[2] == self.patch_size
+        assert y.shape[1] == y.shape[2]
         return x, y
 
     @once

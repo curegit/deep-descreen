@@ -2,6 +2,8 @@ import json
 import struct
 import contextlib
 import numpy as np
+import torch
+import torch.onnx
 import safetensors.torch
 from io import IOBase, BytesIO
 from pathlib import Path
@@ -45,6 +47,10 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
         params_json = json.dumps(kwargs, skipkeys=False, ensure_ascii=True, allow_nan=False)
         DescreenModel.params_json[id(obj)] = params_json
         return obj
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
     @classmethod
     @abstractmethod
@@ -144,3 +150,18 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
             fp.write(struct.pack("!I", len(jsb)))
             fp.write(jsb)
             fp.write(self.serialize_weight())
+
+    def dump_onnx(self, filelike: str | Path | IOBase) -> None:
+        mock_input = torch.zeros((1, 3, 512, 512), device=self.device)
+        #jn = torch.jit.trace(self, mock_input)
+        buf = BytesIO()
+        torch.onnx.export(self, mock_input, buf)
+        match filelike:
+            case str() | Path() as path:
+                ctx = fp = open(resolve_path(path), "wb")
+            case IOBase() as fp:
+                ctx = contextlib.nullcontext()
+            case _:
+                raise TypeError()
+        with ctx:
+            fp.write(buf.getvalue())

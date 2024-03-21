@@ -21,6 +21,7 @@ dependencies = [
   "numpy >= 1.26.0",
   "torch >= 2.2.1",
   "safetensors >= 0.4.2",
+  "onnx",
   "opencv-python >= 4.9.0",
   "rich >= 13.0.0",
 ]

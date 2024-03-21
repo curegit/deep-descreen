@@ -17,6 +17,7 @@ def main():
         description=""
     )
     parser.add_argument("image", metavar="FILE", type=fileinput, help="describe directory")
+    parser.add_argument("output", metavar="FILE", type=fileinput, nargs="?", help="describe input image files (pass '-' to specify stdin)")
     dest_group = parser.add_mutually_exclusive_group()
     dest_group.add_argument("-m", "--model", metavar="NAME", choices=names, default=names[0], help=f"send output to standard output {names}")
     dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=nonempty, help="save output images in DIR directory")
@@ -57,7 +58,7 @@ def main():
 
     buf = BytesIO()
     save_image(result, buf, prefer16=True)
-    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.q == 16))
-    with open(sys.argv[3], "wb") as fp:
+    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.quantize == 16))
+    with open(args.output, "wb") as fp:
         fp.write(r)
     # save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

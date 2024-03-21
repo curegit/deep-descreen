@@ -123,14 +123,36 @@ wide_profile: Path = self_relpath("assets") / "WideGamutCompat-v4.icc"
 srgb_profile: Path = self_relpath("assets") / "sRGB-v4.icc"
 
 
+def magick_has_icc(input_img: bytes) -> bool:
+    try:
+        cp = sp.run(
+            ["magick", "-", "ICC:-"],
+            check=True,
+            text=False,
+            capture_output=True,
+            input=input_img,
+        )
+        if len(cp.stdout) > 0:
+            return True
+        else:
+            return False
+    except sp.CalledProcessError as e:
+        if e.returncode != 1:
+            raise
+        return False
 
 
-def magick_wide_png(input_img: bytes, relative: bool = True) -> bytes:
+def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
-    return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)], png48=True)
+    cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)]
+    if not magick_has_icc(input_img):
+        cmds = ["-profile", str(srgb_profile)] + cmds
+    return magick_png(input_img, cmds, png48=prefer48)
 
 
-def magick_srgb_png(input_img: bytes, relative: bool = True, prefer48: bool = False, assume_wide: bool = True) -> bytes:
+def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False) -> bytes:
     intent = "Relative" if relative else "Perceptual"
-    cmds = ["-profile", str(wide_profile), "-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
+    cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
+    if not magick_has_icc(input_img):
+        cmds = ["-profile", str(wide_profile if assume_wide else srgb_profile)] + cmds
     return magick_png(input_img, cmds, png48=prefer48)

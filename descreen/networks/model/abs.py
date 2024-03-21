@@ -1,7 +1,8 @@
 import json
 import struct
-import safetensors.torch
+import contextlib
 import numpy as np
+import safetensors.torch
 from io import IOBase, BytesIO
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
@@ -92,16 +93,17 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
     def load(cls, byteslike: bytes | IOBase):
         match byteslike:
             case bytes() as bin:
-                buffer = BytesIO(bin)
-            case IOBase() as buffer:
-                pass
+                ctx = fp = BytesIO(bin)
+            case IOBase() as fp:
+                ctx = contextlib.nullcontext()
             case _:
                 raise TypeError()
-        (l,) = struct.unpack(jsp := "!I", buffer.read(struct.calcsize(jsp)))
-        js = buffer.read(l).decode()
-        kwargs = json.loads(js)
-        model = cls(**kwargs)
-        model.load_weight(buffer.read())
+        with ctx:
+            (l,) = struct.unpack(jsp := "!I", fp.read(struct.calcsize(jsp)))
+            js = fp.read(l).decode()
+            kwargs = json.loads(js)
+            model = cls(**kwargs)
+            model.load_weight(fp.read())
         return model
 
     @staticmethod
@@ -109,14 +111,14 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
         fp: IOBase
         match filelike:
             case str() | Path() as path:
-                fp = open(resolve_path(path, strict=True), "rb")
+                ctx = fp = open(resolve_path(path, strict=True), "rb")
             case bytes() as bin:
-                fp = BytesIO(bin)
+                ctx = fp = BytesIO(bin)
             case IOBase() as fp:
-                pass
+                ctx = contextlib.nullcontext()
             case _:
                 raise TypeError()
-        with fp:
+        with ctx:
             (l,) = struct.unpack(ap := "!H", fp.read(struct.calcsize(ap)))
             alias = fp.read(l).decode()
             cls = DescreenModelType.by_alias(alias)
@@ -129,12 +131,12 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
     def serialize(self, filelike: str | Path | IOBase) -> None:
         match filelike:
             case str() | Path() as path:
-                fp = open(resolve_path(path), "wb")
+                ctx = fp = open(resolve_path(path), "wb")
             case IOBase() as fp:
-                pass
+                ctx = contextlib.nullcontext()
             case _:
                 raise TypeError()
-        with fp:
+        with ctx:
             ab = self.alias().encode()
             fp.write(struct.pack("!H", len(ab)))
             fp.write(ab)

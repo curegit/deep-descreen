@@ -3,13 +3,16 @@ import random
 import numpy as np
 import torch
 from pathlib import Path
+from collections.abc import Iterator
 from numpy import ndarray
 from torch import Tensor
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from ..image import load_image, save_image, halftonecv, magick_png, magick_wide_png
 from ..utilities import once, flatmap
 from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
+
+
 
 
 class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
@@ -130,3 +133,17 @@ class HalftonePairTensorDataset(Dataset[tuple[Tensor, Tensor]]):
         xt = torch.from_numpy(x)
         yt = torch.from_numpy(y)
         return xt, yt
+
+
+def enumerate_loader[T: tuple[Tensor, ...]](data_loader: DataLoader[T], *, device=None) -> Iterator[tuple[tuple[int, int, int], T]]:
+    epoch = 0
+    iters = 0
+    samples = 0
+    while True:
+        for batch in data_loader:
+            counts = epoch, iters, samples
+            n = len(batch[0])
+            yield counts, (batch if device is None else tuple(x.to(device) for x in batch))
+            samples += n
+            iters += 1
+        epoch += 1

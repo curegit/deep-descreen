@@ -1,3 +1,4 @@
+import signal
 import torch
 import torch.optim
 import torch.optim.swa_utils
@@ -5,7 +6,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from . import patch_size, batch_size
 from .loss import descreen_loss
-from .data import HalftonePairDataset
+from .data import HalftonePairDataset, enumerate_loader
 from ..networks.model import DescreenModel
 
 
@@ -31,30 +32,45 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
     valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
 
-    def train_loop(iters: int):
-        i = 0
-        epoch = 1
-        while True:
-            for k, (x, y) in enumerate(train_dataloader):
-                i += 1
-                print(f"iter {i}")
-                X = x.to(device)
-                Y = y.to(device)
-                train_step(X, Y)
 
-                if i >= iters:
-                    break
-            else:
-                # valid_step()
-                # test_step()
-                continue
-            # test_step()
-            break
+
+
+
+
+
+    def train_loop(max_samples: int, *, graceful:bool=True):
+        interrupted = False
+        default_sigint = None
+        def interrupt(signum, frame):
+            nonlocal interrupted
+            first_interruption = not interrupted
+            interrupted = True
+        if graceful:
+            default_sigint = signal.getsignal(signal.SIGINT)
+            signal.signal(signal.SIGINT, interrupt)
+        last_epoch = 0
+        for (epoch, iters, samples), (x, y) in enumerate_loader(train_dataloader, device=device):
+            if interrupted:
+                if callable(default_sigint):
+                    signal.signal(signal.SIGINT, default_sigint)
+                break
+            if samples > max_samples:
+                valid_step(valid_dataloader)
+                test_step()
+                break
+            print(f"epoch {epoch}")
+            print(f"iters {iters}")
+            print(f"samples {samples}")
+            train_step(x, y)
+            if iters and iters % 100 == 0:
+                valid_step(valid_dataloader)
+            if last_epoch != epoch:
+                last_epoch = epoch
+                test_step()
 
     def train_step(x, y):
         if False:
             loss = None
-
             def clos():
                 global loss
                 pred = model(x)
@@ -64,7 +80,6 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
                 optimizer.zero_grad()
                 loss.backward()
                 return loss
-
             optimizer.step(clos)
         else:
             pred = model(x)
@@ -76,6 +91,7 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
             ema_model.update_parameters(model)
 
     try:
+
         train_loop(3000)
     except KeyboardInterrupt:
         pass

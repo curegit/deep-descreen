@@ -11,7 +11,7 @@ from .utilities.filesys import resolve_path, self_relpath
 def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normalize: bool = True, orient: bool = True, assert16: bool = False) -> ndarray:
     match filelike:
         case str() | Path() as path:
-            with open(resolve_path(path), "rb") as fp:
+            with open(resolve_path(path, strict=True), "rb") as fp:
                 buffer = fp.read()
         case bytes() as buffer:
             pass

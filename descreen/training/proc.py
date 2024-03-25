@@ -83,7 +83,7 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
             optimizer.step(clos)
         else:
             pred = model(x)
-            loss = descreen_loss(pred, y, tv=0.05)
+            loss = descreen_loss(pred, y, tv=0.15)
             optimizer.zero_grad()
             loss.backward()
             print(f"loss: {loss}")

@@ -16,4 +16,5 @@ def pull(name: str):
     return DescreenModel.deserialize(f)
 
 
+from .basic import *
 from .unet import *

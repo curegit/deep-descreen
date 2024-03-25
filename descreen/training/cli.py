@@ -5,7 +5,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .proc import train
 from ..networks.model.abs import DescreenModelType
 from ..utilities.args import eqsign_kvpairs
-
+from ..utilities.filesys import open_filepath_write
 
 def main() -> int:
     exit_code = 0
@@ -31,5 +31,6 @@ def main() -> int:
     model = DescreenModelType.by_alias(name)(**kwargs)
     trained_model = train(model, args.train, args.valid, device=device)
     trained_model.to(torch.device("cpu"))
-    trained_model.serialize("model_weights.ddbin")
+    with open_filepath_write(".", "model_weights", "ddbin", exist_ok=False) as fp:
+        trained_model.serialize(fp)
     return exit_code

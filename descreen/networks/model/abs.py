@@ -1,3 +1,4 @@
+import copy
 import json
 import struct
 import contextlib
@@ -45,6 +46,16 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
         params_json = json.dumps(kwargs, skipkeys=False, ensure_ascii=True, allow_nan=False)
         DescreenModel.params_json[id(obj)] = params_json
         return obj
+
+    def __copy__(self):
+        cp = copy.copy(super())
+        DescreenModel.params_json[id(cp)] = DescreenModel.params_json[id(self)]
+        return cp
+
+    def __deepcopy__(self, memo):
+        cp = copy.deepcopy(super(), memo)
+        DescreenModel.params_json[id(cp)] = DescreenModel.params_json[id(self)]
+        return cp
 
     @classmethod
     @abstractmethod

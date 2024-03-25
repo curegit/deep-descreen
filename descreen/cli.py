@@ -58,7 +58,7 @@ def main():
 
     buf = BytesIO()
     save_image(result, buf, prefer16=True)
-    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.quantize == 16))
+    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.quantize == 16), assume_wide=True)
     with open(args.output, "wb") as fp:
         fp.write(r)
     # save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

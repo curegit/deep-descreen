@@ -1,3 +1,3 @@
-batch_size: int = 8
+batch_size: int = 4
 
 patch_size: int = 384

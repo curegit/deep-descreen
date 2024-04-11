@@ -8,7 +8,7 @@ from numpy import ndarray
 from .utilities.filesys import resolve_path, self_relpath
 
 
-# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする
+# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする（アルファなし）
 def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normalize: bool = True, orient: bool = True, assert16: bool = False) -> ndarray:
     match filelike:
         case str() | Path() as path:

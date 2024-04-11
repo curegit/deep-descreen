@@ -44,6 +44,8 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
                 return (img / (2**16 - 1)).astype(np.float32)
             else:
                 return img
+        case np.float32:
+            return img
         case _:
             raise RuntimeError()
 

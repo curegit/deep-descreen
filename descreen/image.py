@@ -50,7 +50,7 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True) -> None:
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True, compress=True) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
@@ -67,7 +67,7 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
     if transposed:
         # HxWxBGR にする
         arr = arr.transpose(1, 2, 0)[:, :, [2, 1, 0]]
-    ok, bin = cv2.imencode(".png", arr)
+    ok, bin = cv2.imencode(".png", arr, [cv2.IMWRITE_PNG_COMPRESSION, 9 if compress else 0])
     if not ok:
         raise RuntimeError()
     buffer = bin.tobytes()

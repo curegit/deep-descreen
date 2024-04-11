@@ -1,3 +1,4 @@
+import os
 import subprocess as sp
 import cv2
 import numpy as np
@@ -89,12 +90,12 @@ def halftonecv(input_img: bytes, args: list[str]) -> bytes:
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
-        match e.stderr:
-            case str() as stderr:
-                pass
-            case bytes() as bstderr:
-                bstderr.decode()
+        try:
+            msg = e.stderr.decode(os.device_encoding(2)).strip()
+        except Exception:
+            pass
+        else:
+            print(msg)
         raise
 
 
@@ -109,12 +110,12 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
-        match e.stderr:
-            case str() as stderr:
-                print(stderr)
-            case bytes() as bstderr:
-                print(bstderr.decode())
+        try:
+            msg = e.stderr.decode(os.device_encoding(2)).strip()
+        except Exception:
+            pass
+        else:
+            print(msg)
         raise
 
 

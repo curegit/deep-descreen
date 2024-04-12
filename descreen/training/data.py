@@ -27,11 +27,11 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         (165, 45, 90, 105),
     ]
 
-    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")) -> None:
+    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path | None, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")) -> None:
         super().__init__()
         self.dirpath = resolve_path(dirpath, strict=True)
         self.debug_dir = resolve_path(debug_dir, strict=True)
-        self.cmyk_profile = resolve_path(cmyk_profile, strict=True)
+        self.cmyk_profile = None if cmyk_profile is None else resolve_path(cmyk_profile, strict=True)
         self.reduced_padding = reduced_padding
         self.patch_size = patch_size
         self.debug = debug
@@ -79,7 +79,9 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         patch_bytes = buffer.getvalue()
         pitch = random.uniform(self.min_pitch, self.max_pitch)  # ピッチバリエーション
         angles = tuple(a + random.random() * 90 for a in random.choice(self.cmyk_angles))  # 角度バリエーション
-        color_cmds = ["-m", "CMYK", "-o", "CMYK", "-c", "rel", "-C", str(self.cmyk_profile), "-T"]
+        color_cmds = ["-m", "CMYK", "-o", "CMYK", "-c", "rel", "-T"]
+        if self.cmyk_profile is not None:
+            color_cmds += ["-C", str(self.cmyk_profile)]
         resampler = random.choice(["linear", "lanczos2", "lanczos3", "spline36"])
         halftone_patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-F", resampler, "-p", f"{pitch:.12f}", "-a", *(f"{a:.12f}" for a in angles)])
         patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-K"])

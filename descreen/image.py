@@ -1,3 +1,5 @@
+import sys
+import os
 import subprocess as sp
 import cv2
 import numpy as np
@@ -89,12 +91,21 @@ def halftonecv(input_img: bytes, args: list[str]) -> bytes:
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
         match e.stderr:
-            case str() as stderr:
+            case str() as stderrmes:
                 pass
             case bytes() as bstderr:
-                bstderr.decode()
+                try:
+                    stderrmes = bstderr.decode(os.device_encoding(2))
+                except Exception:
+                    sys.stderr.buffer.write(bstderr)
+                    sys.stderr.buffer.flush()
+                    stderrmes = None
+            case _:
+                raise RuntimeError()
+        if stderrmes:
+            sys.stderr.write(stderrmes)
+            sys.stderr.flush()
         raise
 
 
@@ -135,7 +146,7 @@ def magick_has_icc(input_img: bytes) -> bool:
         if len(cp.stdout) > 0:
             return True
         else:
-            return False
+            raise RuntimeError()
     except sp.CalledProcessError as e:
         if e.returncode != 1:
             raise

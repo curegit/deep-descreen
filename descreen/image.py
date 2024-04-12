@@ -150,7 +150,7 @@ def magick_has_icc(input_img: bytes) -> bool:
         return False
 
 
-def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True, fast:bool=True) -> bytes:
+def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True, fast: bool = True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
     cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)]
     if not magick_has_icc(input_img):
@@ -160,7 +160,7 @@ def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool =
     return magick_png(input_img, cmds, png48=prefer48)
 
 
-def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False, radical : bool = False) -> bytes:
+def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False, radical: bool = False) -> bytes:
     intent = "Relative" if relative else "Perceptual"
     cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
     if not magick_has_icc(input_img):

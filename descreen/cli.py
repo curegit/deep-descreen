@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import torch
 from io import BytesIO
+from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 from .networks.model import DescreenModel, pull, names
@@ -12,7 +13,7 @@ def main():
     exit_code = 0
     parser = ArgumentParser(prog="descreen", allow_abbrev=False, formatter_class=ArgumentDefaultsHelpFormatter, description="")
     parser.add_argument("image", metavar="FILE", type=filelike(exist=True), help="describe directory")
-    parser.add_argument("output", metavar="FILE", type=filelike(exist=False), nargs="?", help="describe input image files (pass '-' to specify stdin)")
+    parser.add_argument("output", metavar="FILE", type=filelike(exist=False), nargs="?", default=..., help="describe input image files (pass '-' to specify stdin)")
     dest_group = parser.add_mutually_exclusive_group()
     dest_group.add_argument("-m", "--model", metavar="NAME", choices=names, default=names[0], help=f"send output to standard output {names}")
     dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=file(exist=True), help="save output images in DIR directory")
@@ -52,8 +53,17 @@ def main():
     result = dest[:, crop[0], crop[1]]
 
     buf = BytesIO()
-    save_image(result, buf, prefer16=True)
-    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.quantize == 16), assume_wide=True)
-    with open(args.output, "wb") as fp:
+    save_image(result, buf, prefer16=True, compress=False)
+    r = magick_srgb_png(buf.getvalue(), relative=True, prefer48=(args.quantize == 16), assume_wide=True, radical=True)
+    if args.output is None:
+        pass
+    if args.output is Ellipsis:
+        if args.image is None:
+            i = "a"
+        else:
+            i = args.image.stem + "-descreen"
+        output = (Path(".") / i).with_suffix(".png")
+    else:
+        output = args.output
+    with open(output, "wb") as fp:
         fp.write(r)
-    # save_wide_gamut_uint16_array_as_srgb(res, sys.argv[4])

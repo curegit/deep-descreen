@@ -52,7 +52,7 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True, compress=True) -> None:
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True, compress=False) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
@@ -150,17 +150,21 @@ def magick_has_icc(input_img: bytes) -> bool:
         return False
 
 
-def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True) -> bytes:
+def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True, fast:bool=True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
     cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)]
     if not magick_has_icc(input_img):
         cmds = ["-profile", str(srgb_profile)] + cmds
+    if fast:
+        cmds += ["-quality", "10"]
     return magick_png(input_img, cmds, png48=prefer48)
 
 
-def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False) -> bytes:
+def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False, radical : bool = False) -> bytes:
     intent = "Relative" if relative else "Perceptual"
     cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
     if not magick_has_icc(input_img):
         cmds = ["-profile", str(wide_profile if assume_wide else srgb_profile)] + cmds
+    if radical:
+        cmds += ["-quality", "98"]
     return magick_png(input_img, cmds, png48=prefer48)

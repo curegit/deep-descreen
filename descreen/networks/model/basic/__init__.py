@@ -1,16 +1,16 @@
 import torch
 import torch.nn as nn
-from ... import AbsModule
+from .. import DescreenModel
 from ...modules import ResidualBlock
 from ....utilities.array import fit_to_smaller_add
 
 
-class TopLevelModel(AbsModule):
-    def __init__(self, internal_channels, activation, N):
+class TopLevelModel(DescreenModel):
+    def __init__(self, internal_channels=128, N=8):
         super(TopLevelModel, self).__init__()
         in_channels = out_channels = 3
         self.conv1 = nn.Conv2d(in_channels, internal_channels, kernel_size=3, padding=0)
-        self.blocks = nn.ModuleList([ResidualBlock(internal_channels, activation) for _ in range(N)])
+        self.blocks = nn.ModuleList([ResidualBlock(internal_channels, 25, nn.LeakyReLU(0.2)) for _ in range(N)])
         self.conv2 = nn.Conv2d(internal_channels, out_channels, kernel_size=3, padding=0)
 
     def forward(self, x):

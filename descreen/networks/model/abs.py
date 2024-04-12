@@ -1,3 +1,4 @@
+import copy
 import json
 import struct
 import contextlib
@@ -51,6 +52,15 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
     @property
     def device(self):
         return next(self.parameters()).device
+    def __copy__(self):
+        cp = copy.copy(super())
+        DescreenModel.params_json[id(cp)] = DescreenModel.params_json[id(self)]
+        return cp
+
+    def __deepcopy__(self, memo):
+        cp = copy.deepcopy(super(), memo)
+        DescreenModel.params_json[id(cp)] = DescreenModel.params_json[id(self)]
+        return cp
 
     @classmethod
     @abstractmethod

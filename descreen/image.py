@@ -1,3 +1,5 @@
+import sys
+import os
 import subprocess as sp
 import cv2
 import numpy as np
@@ -7,11 +9,11 @@ from numpy import ndarray
 from .utilities.filesys import resolve_path, self_relpath
 
 
-# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする
+# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする（アルファなし）
 def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normalize: bool = True, orient: bool = True, assert16: bool = False) -> ndarray:
     match filelike:
         case str() | Path() as path:
-            with open(resolve_path(path), "rb") as fp:
+            with open(resolve_path(path, strict=True), "rb") as fp:
                 buffer = fp.read()
         case bytes() as buffer:
             pass
@@ -19,6 +21,7 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise ValueError()
     # OpenCV が ASCII パスしか扱えない問題を回避するためにバッファを経由する
     bin = np.frombuffer(buffer, np.uint8)
+    # 任意深度アルファなし BGR
     flags = cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH
     if not orient:
         flags |= cv2.IMREAD_IGNORE_ORIENTATION
@@ -43,11 +46,13 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
                 return (img / (2**16 - 1)).astype(np.float32)
             else:
                 return img
+        case np.float32:
+            return img
         case _:
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True) -> None:
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True, compress=False) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
@@ -64,7 +69,7 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
     if transposed:
         # HxWxBGR にする
         arr = arr.transpose(1, 2, 0)[:, :, [2, 1, 0]]
-    ok, bin = cv2.imencode(".png", arr)
+    ok, bin = cv2.imencode(".png", arr, [cv2.IMWRITE_PNG_COMPRESSION, 9 if compress else 0])
     if not ok:
         raise RuntimeError()
     buffer = bin.tobytes()
@@ -78,6 +83,18 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
             raise ValueError()
 
 
+def eprint_sperr(stderr: bytes):
+    assert isinstance(stderr, bytes)
+    try:
+        stderrmsg = stderr.decode(os.device_encoding(2))
+    except Exception:
+        sys.stderr.buffer.write(stderr)
+        sys.stderr.buffer.flush()
+    else:
+        sys.stderr.write(stderrmsg)
+        sys.stderr.flush()
+
+
 def halftonecv(input_img: bytes, args: list[str]) -> bytes:
     try:
         cp = sp.run(
@@ -89,12 +106,7 @@ def halftonecv(input_img: bytes, args: list[str]) -> bytes:
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
-        match e.stderr:
-            case str() as stderr:
-                pass
-            case bytes() as bstderr:
-                bstderr.decode()
+        eprint_sperr(e.stderr)
         raise
 
 
@@ -109,12 +121,7 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
-        match e.stderr:
-            case str() as stderr:
-                print(stderr)
-            case bytes() as bstderr:
-                print(bstderr.decode())
+        eprint_sperr(e.stderr)
         raise
 
 
@@ -123,14 +130,41 @@ wide_profile: Path = self_relpath("assets") / "WideGamutCompat-v4.icc"
 srgb_profile: Path = self_relpath("assets") / "sRGB-v4.icc"
 
 
+def magick_has_icc(input_img: bytes) -> bool:
+    try:
+        cp = sp.run(
+            ["magick", "-", "ICC:-"],
+            check=True,
+            text=False,
+            capture_output=True,
+            input=input_img,
+        )
+        if len(cp.stdout) > 0:
+            return True
+        else:
+            return False
+    except sp.CalledProcessError as e:
+        if e.returncode != 1:
+            eprint_sperr(e.stderr)
+            raise
+        return False
 
 
-def magick_wide_png(input_img: bytes, relative: bool = True) -> bytes:
+def magick_wide_png(input_img: bytes, *, relative: bool = True, prefer48: bool = True, fast: bool = True) -> bytes:
     intent = "Relative" if relative else "Perceptual"
-    return magick_png(input_img, ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)], png48=True)
+    cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(wide_profile)]
+    if not magick_has_icc(input_img):
+        cmds = ["-profile", str(srgb_profile)] + cmds
+    if fast:
+        cmds += ["-quality", "10"]
+    return magick_png(input_img, cmds, png48=prefer48)
 
 
-def magick_srgb_png(input_img: bytes, relative: bool = True, prefer48: bool = False, assume_wide: bool = True) -> bytes:
+def magick_srgb_png(input_img: bytes, *, relative: bool = True, prefer48: bool = False, assume_wide: bool = False, radical: bool = False) -> bytes:
     intent = "Relative" if relative else "Perceptual"
-    cmds = ["-profile", str(wide_profile), "-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
+    cmds = ["-intent", intent, "-black-point-compensation", "-profile", str(srgb_profile)]
+    if not magick_has_icc(input_img):
+        cmds = ["-profile", str(wide_profile if assume_wide else srgb_profile)] + cmds
+    if radical:
+        cmds += ["-quality", "98"]
     return magick_png(input_img, cmds, png48=prefer48)

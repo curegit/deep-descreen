@@ -1,3 +1,21 @@
+# Project
+*.png
+*.jpg
+*.jpeg
+*.jpe
+*.jp2
+*.bmp
+*.dib
+*.tif
+*.tiff
+*.webp
+*.avif
+!/data/mock/**/*.png
+*.icc
+!/descreen/**/*.icc
+*.ddbin
+!/descreen/**/*.ddbin
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -23,3 +23,8 @@ Here are the provisional result and comparison to the baseline (Gaussian blur).
 ```
 python3 -m descreening.pitch.make JapanColor2011Coated.icc images pitch_dataset
 ```
+
+### Select CUDA Device
+
+CUDA_VISIBLE_DEVICES
+

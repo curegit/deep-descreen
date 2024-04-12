@@ -3,9 +3,10 @@ import random
 import numpy as np
 import torch
 from pathlib import Path
+from collections.abc import Iterator
 from numpy import ndarray
 from torch import Tensor
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from ..image import load_image, save_image, halftonecv, magick_png, magick_wide_png
 from ..utilities import once, flatmap
 from ..utilities.array import unpad
@@ -26,11 +27,13 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         (165, 45, 90, 105),
     ]
 
-    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")) -> None:
+    def __init__(
+        self, dirpath: str | Path, cmyk_profile: str | Path | None, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")
+    ) -> None:
         super().__init__()
         self.dirpath = resolve_path(dirpath, strict=True)
         self.debug_dir = resolve_path(debug_dir, strict=True)
-        self.cmyk_profile = resolve_path(cmyk_profile, strict=True)
+        self.cmyk_profile = None if cmyk_profile is None else resolve_path(cmyk_profile, strict=True)
         self.reduced_padding = reduced_padding
         self.patch_size = patch_size
         self.debug = debug
@@ -74,11 +77,13 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
         # Halftone
         buffer = io.BytesIO()
-        save_image(patch, buffer, transposed=False, prefer16=False)
+        save_image(patch, buffer, transposed=False, prefer16=False, compress=False)
         patch_bytes = buffer.getvalue()
         pitch = random.uniform(self.min_pitch, self.max_pitch)  # ピッチバリエーション
         angles = tuple(a + random.random() * 90 for a in random.choice(self.cmyk_angles))  # 角度バリエーション
-        color_cmds = ["-m", "CMYK", "-o", "CMYK", "-c", "rel", "-C", str(self.cmyk_profile), "-T"]
+        color_cmds = ["-m", "CMYK", "-o", "CMYK", "-c", "rel", "-T"]
+        if self.cmyk_profile is not None:
+            color_cmds += ["-C", str(self.cmyk_profile)]
         resampler = random.choice(["linear", "lanczos2", "lanczos3", "spline36"])
         halftone_patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-F", resampler, "-p", f"{pitch:.12f}", "-a", *(f"{a:.12f}" for a in angles)])
         patch_cmyk = halftonecv(patch_bytes, color_cmds + ["-K"])
@@ -102,7 +107,8 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         y = load_image(wide_y, orient=False, assert16=True)
         x = unpad(x, safe_margin)
         y = unpad(y, safe_margin + self.reduced_padding)
-        assert x.shape[1] == x.shape[2] == y.shape[1] == y.shape[2] == self.patch_size
+        assert x.shape[1] == x.shape[2] == self.patch_size
+        assert y.shape[1] == y.shape[2]
         return x, y
 
     @once
@@ -129,3 +135,17 @@ class HalftonePairTensorDataset(Dataset[tuple[Tensor, Tensor]]):
         xt = torch.from_numpy(x)
         yt = torch.from_numpy(y)
         return xt, yt
+
+
+def enumerate_loader[T: tuple[Tensor, ...]](data_loader: DataLoader[T], *, device=None) -> Iterator[tuple[tuple[int, int, int], T]]:
+    epoch = 0
+    iters = 0
+    samples = 0
+    while True:
+        for batch in data_loader:
+            counts = epoch, iters, samples
+            n = len(batch[0])
+            yield counts, (batch if device is None else tuple(x.to(device) for x in batch))
+            samples += n
+            iters += 1
+        epoch += 1

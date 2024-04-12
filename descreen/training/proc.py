@@ -32,19 +32,15 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
     valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, prefetch_factor=4, persistent_workers=True)
 
-
-
-
-
-
-
-    def train_loop(max_samples: int, *, graceful:bool=True):
+    def train_loop(max_samples: int, *, graceful: bool = True):
         interrupted = False
         default_sigint = None
+
         def interrupt(signum, frame):
             nonlocal interrupted
             first_interruption = not interrupted
             interrupted = True
+
         if graceful:
             default_sigint = signal.getsignal(signal.SIGINT)
             signal.signal(signal.SIGINT, interrupt)
@@ -71,6 +67,7 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
     def train_step(x, y):
         if False:
             loss = None
+
             def clos():
                 global loss
                 pred = model(x)
@@ -80,6 +77,7 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
                 optimizer.zero_grad()
                 loss.backward()
                 return loss
+
             optimizer.step(clos)
         else:
             pred = model(x)

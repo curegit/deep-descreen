@@ -13,8 +13,6 @@ from ..utilities.array import unpad
 from ..utilities.filesys import resolve_path, relaxed_glob_recursively
 
 
-
-
 class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
     extensions = ["png", "jpg", "jpeg", "jpe", "jp2", "bmp", "dib", "tif", "tiff", "webp", "avif"]

@@ -1,21 +1,19 @@
 import torch
 import torch.cuda
 import torch.backends.mps
+from typing import Any
+from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .proc import train
 from ..networks.model.abs import DescreenModelType
 from ..utilities.args import eqsign_kvpairs
-from ..utilities.filesys import open_filepath_write
+from ..utilities.filesys import mkdirp, open_filepath_write
+
 
 def main() -> int:
     exit_code = 0
     model_aliases = list(DescreenModelType.aliases.keys())
-    parser = ArgumentParser(
-        prog="python3 -m descreen.training",
-        allow_abbrev=False,
-        formatter_class=ArgumentDefaultsHelpFormatter,
-        description=""
-    )
+    parser = ArgumentParser(prog="python3 -m descreen.training", allow_abbrev=False, formatter_class=ArgumentDefaultsHelpFormatter, description="")
     parser.add_argument("train", metavar="TRAIN_PATH", help="describe directory")
     parser.add_argument("valid", metavar="VALID_PATH")
     parser.add_argument("test", metavar="TEST_PATH")
@@ -24,9 +22,12 @@ def main() -> int:
     args = parser.parse_args()
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
-    print(device)
-    name = args.name
-    kwargs = args.params
+
+    dest: Path = args.dirc
+    name: str = args.name
+    kwargs: dict[str, Any] = args.params
+
+    mkdirp()
 
     model = DescreenModelType.by_alias(name)(**kwargs)
     trained_model = train(model, args.train, args.valid, device=device)

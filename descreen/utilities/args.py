@@ -1,19 +1,23 @@
 import ast
 import typing
+import torch
+from pathlib import Path
+from ..utilities.filesys import resolve_path
 
 
-def nonempty(string):
+def nonempty(string: str) -> str:
     if string:
         return string
     else:
         raise ValueError()
 
 
-def fileinput(string):
-    # stdin (-) を None で返す
+def fileinput(string: str) -> Path | None:
+    # stdin `-` を None で返す
     if string == "-":
         return None
-    return nonempty(string)
+    return resolve_path(string, strict=True)
+
 
 def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
     tree = ast.parse(f"func({string})", mode="eval")
@@ -23,3 +27,6 @@ def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
                 raise ValueError("Only keyword args allowed")
             return {str(kw.arg): ast.literal_eval(kw.value) for kw in call.keywords}
     raise ValueError()
+
+
+def backend_device():

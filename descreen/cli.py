@@ -10,12 +10,7 @@ from .utilities.args import nonempty, fileinput
 
 def main():
     exit_code = 0
-    parser = ArgumentParser(
-        prog="descreen",
-        allow_abbrev=False,
-        formatter_class=ArgumentDefaultsHelpFormatter,
-        description=""
-    )
+    parser = ArgumentParser(prog="descreen", allow_abbrev=False, formatter_class=ArgumentDefaultsHelpFormatter, description="")
     parser.add_argument("image", metavar="FILE", type=fileinput, help="describe directory")
     parser.add_argument("output", metavar="FILE", type=fileinput, nargs="?", help="describe input image files (pass '-' to specify stdin)")
     dest_group = parser.add_mutually_exclusive_group()

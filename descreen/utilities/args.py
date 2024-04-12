@@ -6,11 +6,13 @@ import torch.backends.mps
 from pathlib import Path
 from ..utilities.filesys import resolve_path
 
+
 def natural(string: str) -> int:
     value = int(string)
     if value > 0:
         return value
     raise ValueError()
+
 
 def nonempty(string: str) -> str:
     if string:
@@ -29,15 +31,17 @@ def directory(*, exist: bool = True):
 def file(*, exist: bool = True):
     def file(string: str) -> Path:
         return resolve_path(string, strict=exist)
+
     return file
 
 
-def filelike(*, exist:bool=True, stdio:str="-"):
-    def filelike(string:str) -> Path | None:
+def filelike(*, exist: bool = True, stdio: str = "-"):
+    def filelike(string: str) -> Path | None:
         # stdin/stdout を None で返す
         if string == stdio:
             return None
         return resolve_path(string, strict=exist)
+
     return filelike
 
 

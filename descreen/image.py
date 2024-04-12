@@ -82,6 +82,7 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
         case _:
             raise ValueError()
 
+
 def eprint_sperr(stderr: bytes):
     assert isinstance(stderr, bytes)
     try:
@@ -92,6 +93,7 @@ def eprint_sperr(stderr: bytes):
     else:
         sys.stderr.write(stderrmsg)
         sys.stderr.flush()
+
 
 def halftonecv(input_img: bytes, args: list[str]) -> bytes:
     try:

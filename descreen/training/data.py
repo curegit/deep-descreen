@@ -27,7 +27,9 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         (165, 45, 90, 105),
     ]
 
-    def __init__(self, dirpath: str | Path, cmyk_profile: str | Path | None, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")) -> None:
+    def __init__(
+        self, dirpath: str | Path, cmyk_profile: str | Path | None, patch_size: int, reduced_padding: int, *, augment: bool = False, debug: bool = False, debug_dir: str | Path = Path(".")
+    ) -> None:
         super().__init__()
         self.dirpath = resolve_path(dirpath, strict=True)
         self.debug_dir = resolve_path(debug_dir, strict=True)

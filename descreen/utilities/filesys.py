@@ -33,12 +33,14 @@ def short_relpath(path: str | Path, *, start: str | Path | None = None) -> Path:
         return Path(path)
     return Path(rel)
 
+
 def shorter_relpath(path: str | Path, *, start: str | Path | None = None) -> Path:
     rel = short_relpath(path, start=start)
     if len(str(rel)) < len(str(path)):
         return rel
     else:
         return Path(path)
+
 
 def alt_filepath(filepath: str | Path, *, suffix: str = "+") -> Path:
     path = resolve_path(filepath)

@@ -10,7 +10,19 @@ from .data import HalftonePairDataset, enumerate_loader
 from ..networks.model import DescreenModel
 
 
-def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir: str | Path, test_data_dir: str | Path, output_dir: str | Path, *, max_epoch:int|None=None, profile:str|Path|None, device:torch.device) -> tuple[T, int]:
+def train[
+    T: DescreenModel
+](
+    model: T,
+    train_data_dir: str | Path,
+    valid_data_dir: str | Path,
+    test_data_dir: str | Path,
+    output_dir: str | Path,
+    *,
+    max_epoch: int | None = None,
+    profile: str | Path | None,
+    device: torch.device,
+) -> tuple[T, int]:
     exit_code = 0
 
     model.to(device)
@@ -27,7 +39,6 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
 
     print("OutputSize:", model.output_size(patch_size))
 
-
     training_data = HalftonePairDataset(train_data_dir, profile, patch_size, p, augment=True, debug=True, debug_dir=output_dir).as_tensor()
     valid_data = HalftonePairDataset(valid_data_dir, profile, patch_size, p).as_tensor()
 
@@ -43,7 +54,6 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
         if graceful:
             default_sigint = signal.getsignal(signal.SIGINT)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-
 
         train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
         valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
@@ -92,9 +102,6 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
             optimizer.step()
             ema_model.update_parameters(model)
 
-
-
-
     def valid_step(dataloader):
         # Set the model to evaluation mode - important for batch normalization and dropout layers
         # Unnecessary in this situation but added for best practices
@@ -114,7 +121,6 @@ def train[T: DescreenModel](model: T, train_data_dir: str | Path, valid_data_dir
 
         test_loss /= num_batches
         print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-
 
     def test_step():
         pass

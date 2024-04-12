@@ -5,18 +5,18 @@ from io import BytesIO
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 from .networks.model import DescreenModel, pull, names
-from .utilities.args import nonempty, fileinput
+from .utilities.args import nonempty, file, filelike
 
 
 def main():
     exit_code = 0
     parser = ArgumentParser(prog="descreen", allow_abbrev=False, formatter_class=ArgumentDefaultsHelpFormatter, description="")
-    parser.add_argument("image", metavar="FILE", type=fileinput, help="describe directory")
-    parser.add_argument("output", metavar="FILE", type=fileinput, nargs="?", help="describe input image files (pass '-' to specify stdin)")
+    parser.add_argument("image", metavar="FILE", type=filelike(exist=True), help="describe directory")
+    parser.add_argument("output", metavar="FILE", type=filelike(exist=False), nargs="?", help="describe input image files (pass '-' to specify stdin)")
     dest_group = parser.add_mutually_exclusive_group()
     dest_group.add_argument("-m", "--model", metavar="NAME", choices=names, default=names[0], help=f"send output to standard output {names}")
-    dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=nonempty, help="save output images in DIR directory")
-    dest_group.add_argument("-x", "--onnx", metavar="FILE", type=nonempty, help="save output images in DIR directory")
+    dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=file(exist=True), help="save output images in DIR directory")
+    dest_group.add_argument("-x", "--onnx", metavar="FILE", type=file(exist=True), help="save output images in DIR directory")
     parser.add_argument("-q", "--quantize", "--depth", type=int, default=8, choices=[8, 16], help="color depth of output PNG")
     args = parser.parse_args()
     device = "cpu"

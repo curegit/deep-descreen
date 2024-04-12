@@ -1,9 +1,16 @@
 import ast
 import typing
 import torch
+import torch.cuda
+import torch.backends.mps
 from pathlib import Path
 from ..utilities.filesys import resolve_path
 
+def natural(string: str) -> int:
+    value = int(string)
+    if value > 0:
+        return value
+    raise ValueError()
 
 def nonempty(string: str) -> str:
     if string:
@@ -12,15 +19,30 @@ def nonempty(string: str) -> str:
         raise ValueError()
 
 
-def fileinput(string: str) -> Path | None:
-    # stdin `-` を None で返す
-    if string == "-":
-        return None
-    return resolve_path(string, strict=True)
+def directory(*, exist: bool = True):
+    def directory(string: str) -> Path:
+        return resolve_path(string, exist)
+
+    return directory
+
+
+def file(*, exist: bool = True):
+    def file(string: str) -> Path:
+        return resolve_path(string, strict=exist)
+    return file
+
+
+def filelike(*, exist:bool=True, stdio:str="-"):
+    def filelike(string:str) -> Path | None:
+        # stdin/stdout を None で返す
+        if string == stdio:
+            return None
+        return resolve_path(string, strict=exist)
+    return filelike
 
 
 def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
-    tree = ast.parse(f"func({string})", mode="eval")
+    tree = ast.parse(f"funk({string})", mode="eval")
     match tree.body:
         case ast.Call() as call:
             if call.args:
@@ -29,4 +51,19 @@ def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
     raise ValueError()
 
 
-def backend_device():
+backend_devices: list[str] = ["CPU", "CUDA", "MPS"]
+
+
+def backend_device(string: str) -> torch.device:
+    value = string.upper()
+    if value == "CUDA":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        raise RuntimeError("CUDA is not available")
+    if value == "MPS":
+        if torch.backends.mps.is_available():
+            return torch.device("mps")
+        raise RuntimeError("MPS is not available")
+    if value == "CPU":
+        return torch.device("cpu")
+    raise ValueError()

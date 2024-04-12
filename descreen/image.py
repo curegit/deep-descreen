@@ -21,6 +21,7 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise ValueError()
     # OpenCV が ASCII パスしか扱えない問題を回避するためにバッファを経由する
     bin = np.frombuffer(buffer, np.uint8)
+    # 任意深度アルファなし BGR
     flags = cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH
     if not orient:
         flags |= cv2.IMREAD_IGNORE_ORIENTATION

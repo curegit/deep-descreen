@@ -6,7 +6,7 @@ from ....utilities.array import fit_to_smaller_add
 
 
 class TopLevelModel(DescreenModel):
-    def __init__(self, internal_channels, N):
+    def __init__(self, internal_channels=128, N=8):
         super(TopLevelModel, self).__init__()
         in_channels = out_channels = 3
         self.conv1 = nn.Conv2d(in_channels, internal_channels, kernel_size=3, padding=0)

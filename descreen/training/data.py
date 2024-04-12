@@ -75,7 +75,7 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
         # Halftone
         buffer = io.BytesIO()
-        save_image(patch, buffer, transposed=False, prefer16=False)
+        save_image(patch, buffer, transposed=False, prefer16=False, compress=False)
         patch_bytes = buffer.getvalue()
         pitch = random.uniform(self.min_pitch, self.max_pitch)  # ピッチバリエーション
         angles = tuple(a + random.random() * 90 for a in random.choice(self.cmyk_angles))  # 角度バリエーション

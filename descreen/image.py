@@ -9,7 +9,7 @@ from numpy import ndarray
 from .utilities.filesys import resolve_path, self_relpath
 
 
-# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする
+# ファイルパス、パスオブジェクト、またはバイトを受け取り画像を配列としてロードする（アルファなし）
 def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normalize: bool = True, orient: bool = True, assert16: bool = False) -> ndarray:
     match filelike:
         case str() | Path() as path:
@@ -45,11 +45,13 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
                 return (img / (2**16 - 1)).astype(np.float32)
             else:
                 return img
+        case np.float32:
+            return img
         case _:
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True) -> None:
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16=True, compress=True) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
@@ -66,7 +68,7 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
     if transposed:
         # HxWxBGR にする
         arr = arr.transpose(1, 2, 0)[:, :, [2, 1, 0]]
-    ok, bin = cv2.imencode(".png", arr)
+    ok, bin = cv2.imencode(".png", arr, [cv2.IMWRITE_PNG_COMPRESSION, 9 if compress else 0])
     if not ok:
         raise RuntimeError()
     buffer = bin.tobytes()
@@ -79,6 +81,16 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
         case _:
             raise ValueError()
 
+def eprint_sperr(stderr: bytes):
+    assert isinstance(stderr, bytes)
+    try:
+        stderrmsg = stderr.decode(os.device_encoding(2))
+    except Exception:
+        sys.stderr.buffer.write(stderr)
+        sys.stderr.buffer.flush()
+    else:
+        sys.stderr.write(stderrmsg)
+        sys.stderr.flush()
 
 def halftonecv(input_img: bytes, args: list[str]) -> bytes:
     try:
@@ -91,21 +103,7 @@ def halftonecv(input_img: bytes, args: list[str]) -> bytes:
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        match e.stderr:
-            case str() as stderrmes:
-                pass
-            case bytes() as bstderr:
-                try:
-                    stderrmes = bstderr.decode(os.device_encoding(2))
-                except Exception:
-                    sys.stderr.buffer.write(bstderr)
-                    sys.stderr.buffer.flush()
-                    stderrmes = None
-            case _:
-                raise RuntimeError()
-        if stderrmes:
-            sys.stderr.write(stderrmes)
-            sys.stderr.flush()
+        eprint_sperr(e.stderr)
         raise
 
 
@@ -120,12 +118,7 @@ def magick_png(input_img: bytes, args: list[str], *, png48: bool = False) -> byt
         )
         return cp.stdout
     except sp.CalledProcessError as e:
-        e.returncode
-        match e.stderr:
-            case str() as stderr:
-                print(stderr)
-            case bytes() as bstderr:
-                print(bstderr.decode())
+        eprint_sperr(e.stderr)
         raise
 
 
@@ -146,9 +139,10 @@ def magick_has_icc(input_img: bytes) -> bool:
         if len(cp.stdout) > 0:
             return True
         else:
-            raise RuntimeError()
+            return False
     except sp.CalledProcessError as e:
         if e.returncode != 1:
+            eprint_sperr(e.stderr)
             raise
         return False
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 from .networks.model import DescreenModel, pull, names
-from .utilities.args import nonempty, file, filelike
+from .utilities.args import upper, nonempty, file, filelike, backend_devices
 
 
 def main():
@@ -19,6 +19,7 @@ def main():
     dest_group.add_argument("-d", "--ddbin", metavar="FILE", type=file(exist=True), help="save output images in DIR directory")
     dest_group.add_argument("-x", "--onnx", metavar="FILE", type=file(exist=True), help="save output images in DIR directory")
     parser.add_argument("-q", "--quantize", "--depth", type=int, default=8, choices=[8, 16], help="color depth of output PNG")
+    parser.add_argument("-z", "--device", type=upper, choices=backend_devices)
     args = parser.parse_args()
     device = "cpu"
 

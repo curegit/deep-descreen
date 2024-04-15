@@ -13,6 +13,9 @@ def natural(string: str) -> int:
         return value
     raise ValueError()
 
+def upper(string: str) -> str:
+    return string.upper()
+
 
 def nonempty(string: str) -> str:
     if string:

@@ -95,7 +95,7 @@ def train[
             optimizer.step(clos)
         else:
             pred = model(x)
-            loss = descreen_loss(pred, y, tv=0.15)
+            loss = descreen_loss(pred, y, tv=0.01)
             optimizer.zero_grad()
             loss.backward()
             print(f"loss: {loss}")

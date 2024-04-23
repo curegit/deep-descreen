@@ -18,7 +18,7 @@ class UNetLikeModelLevel(AbsModule):
         # self.conv2 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=0)
         # self.a2 = nn.LeakyReLU(0.1)
         # self.conv3 = nn.Conv2d(channels, channels, kernel_size=5, stride=1, padding=0)
-        self.blocks = nn.ModuleList([ResidualBlock(channels, ksize=large_k, activation=nn.LeakyReLU(0.1)) for _ in range(N)])
+        self.blocks = nn.ModuleList([ResidualBlock(channels, ksize=large_k, activation=nn.ReLU()) for _ in range(N)])
         # self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
 
     def forward(self, x, y=None):

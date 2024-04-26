@@ -29,7 +29,7 @@ def main():
         # TODO
         pass
     else:
-        model = pull(args.name)
+        model = pull(args.model)
     model.to(device)
     model.eval()
     print(model)

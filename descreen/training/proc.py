@@ -55,8 +55,8 @@ def train[
             default_sigint = signal.getsignal(signal.SIGINT)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
-        valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
+        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True, pin_memory=True)
+        valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True, pin_memory=True)
         signal.signal(signal.SIGINT, interrupt)
         last_epoch = 0
         for (epoch, iters, samples), (x, y) in enumerate_loader(train_dataloader, device=device):

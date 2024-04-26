@@ -150,7 +150,7 @@ def enumerate_loader[T: tuple[Tensor, ...]](data_loader: DataLoader[T], *, devic
         for batch in data_loader:
             counts = epoch, iters, samples
             n = len(batch[0])
-            yield counts, (batch if device is None else tuple(x.to(device) for x in batch))
+            yield counts, (batch if device is None else tuple(x.to(device, non_blocking=True) for x in batch))
             samples += n
             iters += 1
         epoch += 1

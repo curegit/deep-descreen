@@ -20,7 +20,7 @@ def main() -> int:
     parser.add_argument("-p", "--params", dest="params", metavar="KWARGS", type=eqsign_kvpairs, required=True, help="")
     parser.add_argument("-e", "--max-epoch", dest="epoch", metavar="N", type=natural, help="aa")
     parser.add_argument("-c", "--profile", metavar="ICC", type=file(exist=True), help="aa")
-    parser.add_argument("-z", "--device", type=upper, choices=backend_devices)
+    parser.add_argument("-z", "--device", type=upper, default="CPU", choices=backend_devices)
     args = parser.parse_args()
 
     dest: Path = args.dest

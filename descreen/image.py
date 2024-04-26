@@ -98,7 +98,7 @@ def eprint_sperr(stderr: bytes):
 def halftonecv(input_img: bytes, args: list[str]) -> bytes:
     try:
         cp = sp.run(
-            ["halftonecv", "-", "-O", "-q"] + args,
+            [sys.executable, "-m", "halftonecv", "-", "-O", "-q"] + args,
             check=True,
             text=False,
             capture_output=True,

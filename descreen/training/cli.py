@@ -30,8 +30,11 @@ def main() -> int:
 
     mkdirp(dest)
     model = DescreenModelType.by_alias(name)(**kwargs)
-    trained_model, exit_code = train(model, args.train, args.valid, args.test, dest, max_epoch=args.epoch, profile=args.profile, device=device)
-    trained_model.to(backend_device("CPU"))
+    trained_model_ema, exit_code = train(model, args.train, args.valid, args.test, dest, max_epoch=args.epoch, profile=args.profile, device=device)
+    model.to(backend_device("CPU"))
+    trained_model_ema.to(backend_device("CPU"))
+    with open_filepath_write(dest, f"{name}-final-ema", "ddbin", exist_ok=False) as fp:
+        trained_model_ema.serialize(fp)
     with open_filepath_write(dest, f"{name}-final", "ddbin", exist_ok=False) as fp:
-        trained_model.serialize(fp)
+        model.serialize(fp)
     return exit_code

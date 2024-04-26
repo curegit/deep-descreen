@@ -8,6 +8,7 @@ files = {
 
 names = list(files.keys())
 
+default_name = names[0]
 
 def pull(name: str):
     f = files.get(name)

@@ -32,15 +32,16 @@ def train[
 
     optimizer = torch.optim.RAdam(model.parameters(), lr=0.001)
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.002)
-    # optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
 
-    p = model.reduced_padding(patch_size)
-    print(p)
+    input_size = model.input_size(patch_size)
+    padding = model.reduced_padding(input_size)
+    assert model.output_size(input_size) == patch_size
 
-    print("OutputSize:", model.output_size(patch_size))
+    print("InputSize:", input_size)
+    print("OutputSize:", patch_size)
 
-    training_data = HalftonePairDataset(train_data_dir, profile, patch_size, p, augment=True, debug=True, debug_dir=output_dir).as_tensor()
-    valid_data = HalftonePairDataset(valid_data_dir, profile, patch_size, p).as_tensor()
+    training_data = HalftonePairDataset(train_data_dir, profile, input_size, padding, augment=True, debug=True, debug_dir=output_dir).as_tensor()
+    valid_data = HalftonePairDataset(valid_data_dir, profile, input_size, padding).as_tensor()
 
     def train_loop(max_samples: int, *, graceful: bool = True):
         interrupted = False
@@ -55,8 +56,8 @@ def train[
             default_sigint = signal.getsignal(signal.SIGINT)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
-        valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True)
+        train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True, pin_memory=True)
+        valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=8, prefetch_factor=4, persistent_workers=True, pin_memory=True)
         signal.signal(signal.SIGINT, interrupt)
         last_epoch = 0
         for (epoch, iters, samples), (x, y) in enumerate_loader(train_dataloader, device=device):
@@ -79,28 +80,13 @@ def train[
                 test_step()
 
     def train_step(x, y):
-        if False:
-            loss = None
-
-            def clos():
-                global loss
-                pred = model(x)
-                loss = loss_fn(pred, y)
-                print(f"loss: {loss}")
-                # Backpropagation
-                optimizer.zero_grad()
-                loss.backward()
-                return loss
-
-            optimizer.step(clos)
-        else:
-            pred = model(x)
-            loss = descreen_loss(pred, y, tv=0.15)
-            optimizer.zero_grad()
-            loss.backward()
-            print(f"loss: {loss}")
-            optimizer.step()
-            ema_model.update_parameters(model)
+        pred = model(x)
+        loss = descreen_loss(pred, y, tv=0.01)
+        optimizer.zero_grad()
+        loss.backward()
+        print(f"loss: {loss}")
+        optimizer.step()
+        ema_model.update_parameters(model)
 
     def valid_step(dataloader):
         # Set the model to evaluation mode - important for batch normalization and dropout layers

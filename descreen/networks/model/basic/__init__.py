@@ -10,7 +10,7 @@ class TopLevelModel(DescreenModel):
         super(TopLevelModel, self).__init__()
         in_channels = out_channels = 3
         self.conv1 = nn.Conv2d(in_channels, internal_channels, kernel_size=3, padding=0)
-        self.blocks = nn.ModuleList([ResidualBlock(internal_channels, 25, nn.LeakyReLU(0.2)) for _ in range(N)])
+        self.blocks = nn.ModuleList([ResidualBlock(internal_channels, 25, nn.ReLU()) for _ in range(N)])
         self.conv2 = nn.Conv2d(internal_channels, out_channels, kernel_size=3, padding=0)
 
     def forward(self, x):

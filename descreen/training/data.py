@@ -3,6 +3,7 @@ import random
 import numpy as np
 import torch
 from pathlib import Path
+from functools import cache
 from collections.abc import Iterator
 from numpy import ndarray
 from torch import Tensor
@@ -44,8 +45,7 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         return len(self.files)
 
     def __getitem__(self, idx: int) -> tuple[ndarray, ndarray]:
-        path = self.files[idx]
-        img = load_image(path, transpose=False, normalize=False)
+        img = self.load_image_cached(idx)
         assert img.ndim == 3
         assert img.shape[2] == 3
         height, width = img.shape[:2]
@@ -112,6 +112,11 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         assert y.shape[1] == y.shape[2]
         return x, y
 
+    @cache
+    def load_image_cached(self, idx: int) -> ndarray:
+        path = self.files[idx]
+        return load_image(path, transpose=False, normalize=False)
+
     @once
     def save_example_pair(self, idx: int, x_png: bytes, y_png: bytes) -> None:
         with open(self.debug_dir / f"example-{idx}-x.png", "wb") as fp:
@@ -146,7 +151,7 @@ def enumerate_loader[T: tuple[Tensor, ...]](data_loader: DataLoader[T], *, devic
         for batch in data_loader:
             counts = epoch, iters, samples
             n = len(batch[0])
-            yield counts, (batch if device is None else tuple(x.to(device) for x in batch))
+            yield counts, (batch if device is None else tuple(x.to(device, non_blocking=True) for x in batch))
             samples += n
             iters += 1
         epoch += 1

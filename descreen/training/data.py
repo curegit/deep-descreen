@@ -3,6 +3,7 @@ import random
 import numpy as np
 import torch
 from pathlib import Path
+from functools import cache
 from collections.abc import Iterator
 from numpy import ndarray
 from torch import Tensor
@@ -44,8 +45,7 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         return len(self.files)
 
     def __getitem__(self, idx: int) -> tuple[ndarray, ndarray]:
-        path = self.files[idx]
-        img = load_image(path, transpose=False, normalize=False)
+        img = self.load_image_cached(idx)
         assert img.ndim == 3
         assert img.shape[2] == 3
         height, width = img.shape[:2]
@@ -110,6 +110,11 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         assert x.shape[1] == x.shape[2] == self.patch_size
         assert y.shape[1] == y.shape[2]
         return x, y
+
+    @cache
+    def load_image_cached(self, idx: int) -> ndarray:
+        path = self.files[idx]
+        return load_image(path, transpose=False, normalize=False)
 
     @once
     def save_example_pair(self, idx: int, x_png: bytes, y_png: bytes) -> None:

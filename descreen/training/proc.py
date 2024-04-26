@@ -34,13 +34,15 @@ def train[
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.002)
     # optimizer = torch.optim.LBFGS(model.parameters(), lr=0.1)
 
-    p = model.reduced_padding(patch_size)
-    print(p)
+    input_size = model.input_size(patch_size)
+    padding = model.reduced_padding(input_size)
+    assert model.output_size(input_size) == patch_size
 
-    print("OutputSize:", model.output_size(patch_size))
+    print("InputSize:", input_size)
+    print("OutputSize:", patch_size)
 
-    training_data = HalftonePairDataset(train_data_dir, profile, patch_size, p, augment=True, debug=True, debug_dir=output_dir).as_tensor()
-    valid_data = HalftonePairDataset(valid_data_dir, profile, patch_size, p).as_tensor()
+    training_data = HalftonePairDataset(train_data_dir, profile, input_size, padding, augment=True, debug=True, debug_dir=output_dir).as_tensor()
+    valid_data = HalftonePairDataset(valid_data_dir, profile, input_size, padding).as_tensor()
 
     def train_loop(max_samples: int, *, graceful: bool = True):
         interrupted = False

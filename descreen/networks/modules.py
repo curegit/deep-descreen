@@ -80,3 +80,25 @@ class ResidualBlock(AbsModule):
 
     def output_size_unchecked(self, input_size: int) -> int:
         return output_size(output_size(output_size(input_size, self.ksize), 3), 3)
+
+
+class SimpleResidualBlock(AbsModule):
+    def __init__(self, channels, activation) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
+        self.activation = activation
+        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
+
+    def forward(self, x: Tensor) -> Tensor:
+        residual = x
+        out = self.conv1(x)
+        out = self.activation(out)
+        out = self.conv2(out)
+        return fit_to_smaller_add(residual, out)
+
+    def input_size_unchecked(self, output_size: int) -> int:
+        return input_size(input_size(output_size, 3), 3)
+
+    def output_size_unchecked(self, input_size: int) -> int:
+        return output_size(output_size(input_size, 3), 3)
+

@@ -8,6 +8,7 @@ from io import IOBase, BytesIO
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from numpy import ndarray
+from torch import Tensor
 from .. import AbsModule
 from ...utilities import range_chunks
 from ...utilities.filesys import resolve_path
@@ -56,6 +57,14 @@ class DescreenModel(AbsModule, metaclass=DescreenModelType):
         cp = copy.deepcopy(super(), memo)
         DescreenModel.params_json[id(cp)] = DescreenModel.params_json[id(self)]
         return cp
+
+    @abstractmethod
+    def forward_t(self, x: Tensor) -> tuple[Tensor, Tensor]:
+        raise NotImplementedError()
+
+    def forward(self, x: Tensor) -> Tensor:
+        a, b = self.forward_t(x)
+        return b
 
     @classmethod
     @abstractmethod

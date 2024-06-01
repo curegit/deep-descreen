@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 from .. import DescreenModel
+from ...resnet import RepeatedResidualBlock
 from ...modules import ResidualBlock
-from ....utilities.array import fit_to_smaller_add
+from ....utilities.array import fit_to_smaller, fit_to_smaller_add
 
 
 class TopLevelModel(DescreenModel):
@@ -12,14 +13,18 @@ class TopLevelModel(DescreenModel):
         self.conv1 = nn.Conv2d(in_channels, internal_channels, kernel_size=3, padding=0)
         self.blocks = nn.ModuleList([ResidualBlock(internal_channels, 25, nn.ReLU()) for _ in range(N)])
         self.conv2 = nn.Conv2d(internal_channels, out_channels, kernel_size=3, padding=0)
+        self.resnet = RepeatedResidualBlock(3, 3, internal_channels)
 
-    def forward(self, x):
+    def forward_t(self, x):
         residual = x
         out = self.conv1(x)
         for block in self.blocks:
             out = block(out)
         out = self.conv2(out)
-        return fit_to_smaller_add(residual, out)
+        r = self.resnet(out)
+        h = fit_to_smaller_add(out, r)
+        m, ff = fit_to_smaller(out, h)
+        return m, ff
 
     @classmethod
     def alias(cls) -> str:

@@ -80,8 +80,8 @@ def train[
                 test_step()
 
     def train_step(x, y):
-        pred = model(x)
-        loss = descreen_loss(pred, y, tv=0.01)
+        pred_mid, pred_full = model.forward_t(x)
+        loss = descreen_loss(pred_mid, y, tv=0.01) + 1.5 * descreen_loss(pred_full, y, tv=0.01)
         optimizer.zero_grad()
         loss.backward()
         print(f"loss: {loss}")

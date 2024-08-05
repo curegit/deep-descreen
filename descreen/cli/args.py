@@ -1,10 +1,6 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 
-
-
-
-
 def parse():
     parser = ArgumentParser(prog="descreen", allow_abbrev=False, formatter_class=ArgumentDefaultsHelpFormatter, description="")
     parser.add_argument("image", metavar="IN_FILE", type=filelike(exist=True), help="describe directory")

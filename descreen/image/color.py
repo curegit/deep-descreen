@@ -1,17 +1,14 @@
 import functools
-import importlib.resources
 import numpy as np
-import descreen
-
-root = importlib.resources.files(descreen)
+import descreen.assets
 
 
 def srgb_profile_file():
-    return importlib.resources.as_file(root / "assets" / "sRGB-v4.icc")
+    return descreen.assets.grab_file("profiles", "sRGB-v4.icc")
 
 
 def wide_profile_file():
-    return importlib.resources.as_file(root / "assets" / "WideGamutCompat-v4.icc")
+    return descreen.assets.grab_file("profiles", "WideGamutCompat-v4.icc")
 
 
 @functools.cache

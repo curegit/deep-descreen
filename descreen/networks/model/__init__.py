@@ -1,9 +1,9 @@
-from descreen.utilities.filesys import self_relpath as rel
+from descreen.assets import grab_file
 from descreen.networks.model.abs import DescreenModel
 
 
 files = {
-    "basic": rel("./unet/model.ddbin"),
+    "basic": "basic.ddbin",
 }
 
 names = list(files.keys())
@@ -15,8 +15,10 @@ def pull(name: str):
     f = files.get(name)
     if f is None:
         raise ValueError()
-    return DescreenModel.deserialize(f)
+    with grab_file("models", f) as p:
+        return DescreenModel.deserialize(p)
+
 
 # TODO: dynamic?
 from descreen.networks.model.basic import *
-from descreen.networks.model.basic import *
+from descreen.networks.model.unet import *

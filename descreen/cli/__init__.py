@@ -4,9 +4,9 @@ import torch
 from io import BytesIO
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from descreen. image import load_image, save_image
+from descreen.image import load_image, save_image
 from descreen.image.magick import magick_wide_png, magick_srgb_png
-from descreen. networks.model import DescreenModel, pull, names, default_name
+from descreen.networks.model import DescreenModel, pull, names, default_name
 from descreen.cli.args import parse
 from descreen.cli.types import upper, nonempty, file, filelike, backend_device, backend_devices
 

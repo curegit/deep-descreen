@@ -11,7 +11,10 @@ def convert(input_img: bytes, args: list[str]) -> bytes:
         else:
             raise RuntimeError()
 
-    code: int = hcv.main(argv=["-q", "-V"] + args, inputs=[input_img], refout=receive, nofile=True, notrap=True)
+    try:
+        code: int = hcv.main(argv=["-q", "-V"] + args, inputs=[input_img], refout=receive, nofile=True, notrap=True)
+    except SystemExit as e:
+        raise RuntimeError() from e
     if code != 0:
         raise RuntimeError(code)
     if result is None:

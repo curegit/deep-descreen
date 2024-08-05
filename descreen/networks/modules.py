@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from . import AbsModule
-from .utils import input_size, output_size
-from ..utilities.array import fit_to_smaller_add
+from descreen.networks import AbsModule
+from descreen.networks.utils import input_size, output_size
+from descreen.utilities.array import fit_to_smaller_add
 
 
 class Lanczos2xUpsampler(AbsModule):
@@ -60,9 +60,10 @@ class ResidualBlock(AbsModule):
         self.activation0 = activation
         self.depthwise_conv = nn.Conv2d(channels, channels, kernel_size=ksize, groups=channels, padding=0)
         self.activation1 = activation
-        self.full_conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
-        self.activation2 = activation
-        self.conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0, bias=False)
+        # self.full_conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
+        # self.activation2 = activation
+        self.conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
+        self.a = nn.ReLU()  # nn.LeakyReLU(0.2)
 
     def forward(self, x: Tensor) -> Tensor:
         residual = x
@@ -70,16 +71,14 @@ class ResidualBlock(AbsModule):
         out = self.activation0(out)
         out = self.depthwise_conv(out)
         out = self.activation1(out)
-        out = self.full_conv(out)
-        out = self.activation2(out)
         out = self.conv(out)
-        return fit_to_smaller_add(residual, out)
+        return self.a(fit_to_smaller_add(residual, out))
 
     def input_size_unchecked(self, output_size: int) -> int:
-        return input_size(input_size(input_size(output_size, 3), 3), self.ksize)
+        return input_size(input_size(input_size(output_size, 1), 1), self.ksize)
 
     def output_size_unchecked(self, input_size: int) -> int:
-        return output_size(output_size(output_size(input_size, self.ksize), 3), 3)
+        return output_size(output_size(output_size(input_size, self.ksize), 1), 1)
 
 
 class SimpleResidualBlock(AbsModule):
@@ -87,18 +86,18 @@ class SimpleResidualBlock(AbsModule):
         super().__init__()
         self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
         self.activation = activation
-        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
+        self.a = nn.ReLU()  # nn.LeakyReLU(0.2)
 
     def forward(self, x: Tensor) -> Tensor:
         residual = x
         out = self.conv1(x)
         out = self.activation(out)
         out = self.conv2(out)
-        return self.activation(fit_to_smaller_add(residual, out))
+        return self.a(fit_to_smaller_add(residual, out))
 
     def input_size_unchecked(self, output_size: int) -> int:
         return input_size(input_size(output_size, 3), 3)
 
     def output_size_unchecked(self, input_size: int) -> int:
         return output_size(output_size(input_size, 3), 3)
-

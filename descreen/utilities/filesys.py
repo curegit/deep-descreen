@@ -13,7 +13,7 @@ def mkdirp(path: str | Path, recreate: bool = False) -> None:
     os.makedirs(path, exist_ok=True)
 
 
-def resolve_path(path: str | Path, *, strict=False) -> Path:
+def resolve_path(path: str | Path, strict=False) -> Path:
     return Path(path).resolve(strict=strict)
 
 

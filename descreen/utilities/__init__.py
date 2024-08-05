@@ -1,6 +1,5 @@
 import functools
 import operator as op
-from typing import Any
 from collections.abc import Iterable, Callable
 
 
@@ -23,7 +22,7 @@ def once[T](func: Callable[..., T]):
     return wrapper
 
 
-def prod(xs: Iterable[Any], start: Any = 1) -> Any:
+def prod(xs, start=1):
     return functools.reduce(op.mul, xs, start)
 
 

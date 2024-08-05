@@ -1,10 +1,10 @@
 from typing import Any
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from .proc import train
-from ..networks.model.abs import DescreenModelType
-from ..utilities.args import natural, directory, file, upper, eqsign_kvpairs, backend_device, backend_devices
-from ..utilities.filesys import mkdirp, open_filepath_write, shorter_relpath
+from descreen.training.proc import train
+from descreen.networks.model.abs import DescreenModelType
+from descreen.cli.types import natural, directory, file, upper, eqsign_kvpairs, backend_device, backend_devices
+from descreen.utilities.filesys import mkdirp, open_filepath_write, shorter_relpath
 
 
 def main() -> int:
@@ -16,6 +16,8 @@ def main() -> int:
     parser.add_argument("valid", metavar="VALID_PATH")
     parser.add_argument("test", metavar="TEST_PATH")
     parser.add_argument("-d", "--dest", metavar="DIR", type=directory(exist=False), default=shorter_relpath("."), help="write output to target directory DIR")
+    parser.add_argument("-k", "--cache", metavar="DIR", type=directory(exist=True), help="write output to target directory DIR")
+    parser.add_argument("-s", "--static", action="store_true", help="write output to target directory DIR")
     parser.add_argument("-m", "--model", dest="name", metavar="NAME", type=str, choices=model_aliases, required=True, help="")
     parser.add_argument("-p", "--params", dest="params", metavar="KWARGS", type=eqsign_kvpairs, required=True, help="")
     parser.add_argument("-e", "--max-epoch", dest="epoch", metavar="N", type=natural, help="aa")
@@ -30,7 +32,7 @@ def main() -> int:
 
     mkdirp(dest)
     model = DescreenModelType.by_alias(name)(**kwargs)
-    trained_model_ema, exit_code = train(model, args.train, args.valid, args.test, dest, max_epoch=args.epoch, profile=args.profile, device=device)
+    trained_model_ema, exit_code = train(model, args.train, args.valid, args.test, dest, cache_to=args.cache, from_cache=args.static, max_epoch=args.epoch, profile=args.profile, device=device)
     model.to(backend_device("CPU"))
     trained_model_ema.to(backend_device("CPU"))
     with open_filepath_write(dest, f"{name}-final-ema", "ddbin", exist_ok=False) as fp:

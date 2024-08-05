@@ -1,5 +1,5 @@
-batch_size: int = 16
+batch_size: int = 48
 
 patch_size: int = 8
 
-num_images: int = batch_size * 10000
+num_images: int = batch_size * 50000

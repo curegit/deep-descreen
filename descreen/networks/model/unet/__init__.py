@@ -1,10 +1,10 @@
 from torch import nn, cat
-from .. import DescreenModel
-from ... import AbsModule
-from ...modules import ResidualBlock, Lanczos2xUpsampler
-from ...resnet import RepeatedResidualBlock
-from ...utils import input_size, output_size
-from ....utilities.array import fit_to_smaller, fit_to_smaller_add
+from descreen.networks.model import DescreenModel
+from descreen.networks import AbsModule
+from descreen.networks.modules import ResidualBlock, Lanczos2xUpsampler
+from descreen.networks.resnet import RepeatedResidualBlock
+from descreen.networks.utils import input_size, output_size
+from descreen.utilities.array import fit_to_smaller, fit_to_smaller_add
 
 
 class UNetLikeModelLevel(AbsModule):

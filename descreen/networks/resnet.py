@@ -1,15 +1,14 @@
-
 import torch.nn as nn
 from torch import Tensor
-from . import AbsModule
-from .modules import SimpleResidualBlock
-from .utils import input_size, output_size
+from descreen.networks import AbsModule
+from descreen.networks.modules import SimpleResidualBlock
+
 
 class RepeatedResidualBlock(AbsModule):
     def __init__(self, in_channels, out_channels, inner_channels, activation=nn.ReLU(), n=8) -> None:
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, inner_channels, kernel_size=1)
-        self.out_conv = nn.Conv2d(inner_channels, out_channels, kernel_size=1, bias=False)
+        self.out_conv = nn.Conv2d(inner_channels, out_channels, kernel_size=1)
         self.blocks = nn.ModuleList([SimpleResidualBlock(inner_channels, activation) for _ in range(n)])
 
     def forward(self, x: Tensor) -> Tensor:

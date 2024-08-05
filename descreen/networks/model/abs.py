@@ -9,9 +9,9 @@ from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from numpy import ndarray
 from torch import Tensor
-from .. import AbsModule
-from ...utilities import range_chunks
-from ...utilities.filesys import resolve_path
+from descreen.networks import AbsModule
+from descreen.utilities import range_chunks
+from descreen.utilities.filesys import resolve_path
 
 
 class DescreenModelType(ABCMeta):

@@ -53,6 +53,7 @@ def filelike(*, exist: bool = True, stdio: str = "-"):
         if string == stdio:
             return None
         path = resolve_path(string, strict=exist)
+        return path
 
     return filelike
 
@@ -70,8 +71,11 @@ def eqsign_kvpairs(string: str) -> dict[str, typing.Any]:
 backend_devices: list[str] = ["CPU", "CUDA", "MPS"]
 
 
-def backend_device(string: str) -> torch.device:
-    value = upper(string)
+def backend_device(string: str | None) -> torch.device:
+    if string is None:
+        value = "CPU"
+    else:
+        value = upper(string)
     if value == "CUDA":
         if torch.cuda.is_available():
             return torch.device("cuda")

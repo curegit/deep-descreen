@@ -9,7 +9,7 @@ class RepeatedResidualBlock(AbsModule):
     def __init__(self, in_channels, out_channels, inner_channels, activation=nn.ReLU(), n=8) -> None:
         super().__init__()
         self.in_conv = nn.Conv2d(in_channels, inner_channels, kernel_size=1)
-        self.out_conv = nn.Conv2d(inner_channels, out_channels, kernel_size=1)
+        self.out_conv = nn.Conv2d(inner_channels, out_channels, kernel_size=1, bias=False)
         self.blocks = nn.ModuleList([SimpleResidualBlock(inner_channels, activation) for _ in range(n)])
 
     def forward(self, x: Tensor) -> Tensor:
@@ -30,4 +30,3 @@ class RepeatedResidualBlock(AbsModule):
         for b in self.blocks:
             size = b.output_size(size)
         return size
-

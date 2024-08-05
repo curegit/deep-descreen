@@ -6,7 +6,7 @@ from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from .image import load_image, save_image, magick_wide_png, magick_srgb_png
 from .networks.model import DescreenModel, pull, names, default_name
-from .utilities.args import upper, nonempty, file, filelike, backend_devices
+from .utilities.args import upper, nonempty, file, filelike, backend_device, backend_devices
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     parser.add_argument("-q", "--quantize", "--depth", type=int, default=8, choices=[8, 16], help="color depth of output PNG")
     parser.add_argument("-z", "--device", type=upper, choices=backend_devices)
     args = parser.parse_args()
-    device = "cpu"
+    device = backend_device(args.device)
 
     if args.ddbin is not None:
         model = DescreenModel.deserialize(args.ddbin)

@@ -54,7 +54,7 @@ class UNetLikeModel(DescreenModel):
     def __init__(self, channels=128):
         super().__init__()
         # self.residual = residual
-        self.upper_block = UNetLikeModelLevel(channels, N=8, large_k=21)
+        self.upper_block = UNetLikeModelLevel(channels, N=8, large_k=13)
         self.lower_block = UNetLikeModelLevel(channels, N=4, large_k=9, bottom=True)
         self.down = nn.AvgPool2d(kernel_size=2, stride=2)
         # self.block1 = UNetLikeModelLevel(channels)
@@ -64,14 +64,15 @@ class UNetLikeModel(DescreenModel):
         # self.up2 = Lanczos2xUpsampler(n=2, pad=False)
         # self.up3 = Lanczos2xUpsampler(n=2, pad=False)
         self.out = nn.Conv2d(channels, 3, kernel_size=3, stride=1, padding=0)
-        self.resnet = RepeatedResidualBlock(3, 3, channels)
+        self.resnet = RepeatedResidualBlock(6, 3, channels)
 
     def forward_t(self, x):
         z = self.down(x)
         h1 = self.lower_block(z)
         h2 = self.upper_block(x, h1)
         h = fit_to_smaller_add(x, self.out(h2))
-        r = self.resnet(h)
+        _, s = fit_to_smaller(h, x)
+        r = self.resnet(cat((h, s), dim=1))
         f = fit_to_smaller_add(h, r)
         m, ff = fit_to_smaller(h, f)
         return m, ff

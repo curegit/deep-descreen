@@ -57,22 +57,22 @@ class ResidualBlock(AbsModule):
         super().__init__()
         self.ksize = ksize
         self.pointwise_conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
-        self.activation0 = activation
+        self.act1 = activation
         self.depthwise_conv = nn.Conv2d(channels, channels, kernel_size=ksize, groups=channels, padding=0)
-        self.activation1 = activation
+        self.act2 = activation
         # self.full_conv = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
         # self.activation2 = activation
-        self.conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
-        self.a = nn.ReLU()  # nn.LeakyReLU(0.2)
+        self.out_conv = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
+        self.act3 = nn.ReLU()  # nn.LeakyReLU(0.2)
 
     def forward(self, x: Tensor) -> Tensor:
         residual = x
         out = self.pointwise_conv(x)
-        out = self.activation0(out)
+        out = self.act1(out)
         out = self.depthwise_conv(out)
-        out = self.activation1(out)
-        out = self.conv(out)
-        return self.a(fit_to_smaller_add(residual, out))
+        out = self.act2(out)
+        out = self.out_conv(out)
+        return self.act3(fit_to_smaller_add(residual, out))
 
     def input_size_unchecked(self, output_size: int) -> int:
         return input_size(input_size(input_size(output_size, 1), 1), self.ksize)
@@ -85,16 +85,16 @@ class SimpleResidualBlock(AbsModule):
     def __init__(self, channels, activation) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
-        self.activation = activation
+        self.act1 = activation
         self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=0)
-        self.a = nn.ReLU()  # nn.LeakyReLU(0.2)
+        self.act2 = nn.ReLU()  # nn.LeakyReLU(0.2)
 
     def forward(self, x: Tensor) -> Tensor:
         residual = x
         out = self.conv1(x)
-        out = self.activation(out)
+        out = self.act1(out)
         out = self.conv2(out)
-        return self.a(fit_to_smaller_add(residual, out))
+        return self.act2(fit_to_smaller_add(residual, out))
 
     def input_size_unchecked(self, output_size: int) -> int:
         return input_size(input_size(output_size, 3), 3)

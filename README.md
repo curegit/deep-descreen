@@ -28,3 +28,7 @@ python3 -m descreening.pitch.make JapanColor2011Coated.icc images pitch_dataset
 
 CUDA_VISIBLE_DEVICES
 
+
+
+network can process images of any size during testing phase since it is a fully
+convolutional network

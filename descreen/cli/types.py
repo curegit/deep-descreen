@@ -4,7 +4,7 @@ import torch
 import torch.cuda
 import torch.backends.mps
 from pathlib import Path
-from descreen.utilities.filesys import resolve_path
+from descreen.utilities.filesys import mkdirp, resolve_path
 
 
 def natural(string: str) -> int:
@@ -25,14 +25,12 @@ def nonempty(string: str) -> str:
         raise ValueError()
 
 
-def directory(*, exist: bool = True):
+def directory(*, exist: bool = True, create: bool = False):
     def directory(string: str) -> Path:
-        path = resolve_path(string, strict=exist)
-        if exist:
-            return
-        else:
-            return path
-
+        path = resolve_path(string, strict=(exist and not create))
+        if create:
+            mkdirp(path)
+        return path
     return directory
 
 

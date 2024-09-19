@@ -1,9 +1,11 @@
 import io
+import os
 import numpy as np
 import torch
 from hashlib import blake2s
 from pathlib import Path
 from functools import cache
+from itertools import permutations
 from collections.abc import Iterator
 from numpy import ndarray
 from torch import Tensor
@@ -13,7 +15,7 @@ from descreen.image.halftone import convert as halftonecv
 from descreen.image.magick import magick_png, magick_wide_png
 from descreen.utilities import once, flatmap
 from descreen.utilities.array import unpad
-from descreen.utilities.filesys import resolve_path, relaxed_glob_recursively
+from descreen.utilities.filesys import resolve_path, glob_recursively
 
 
 class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
@@ -22,13 +24,12 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
     min_pitch, max_pitch = 2.14, 5.24
 
-    cmyk_angles: list[tuple[int, ...]] = [
-        (15, 45, 90, 75),
-        (15, 75, 30, 45),
-        (15, 75, 90, 45),
-        (105, 75, 90, 15),
-        (165, 45, 90, 105),
-    ]
+    cmyk_angles: list[tuple[int, ...]] = sum([
+        list(permutations((15, 45, 90, 75))),
+        list(permutations((15, 75, 30, 45))),
+        list(permutations((105, 75, 90, 15))),
+        list(permutations((165, 45, 90, 105))),
+    ], [])
 
     def __init__(
         self,
@@ -52,7 +53,7 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         self.debug = debug
         self.augment = augment
         self.save_dir = save_dir
-        self.files = flatmap(relaxed_glob_recursively(dirpath, ext) for ext in self.extensions)
+        self.files = flatmap(glob_recursively(dirpath, ext) for ext in self.extensions)
         if len(self.files) < 1:
             print("f")
             raise RuntimeError()
@@ -136,7 +137,11 @@ class HalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
 
         if self.save_dir is not None:
             name = blake2s(wide_x).hexdigest()
-            p = resolve_path(self.save_dir, strict=True)
+            p = resolve_path(self.save_dir, strict=True) / name[:2]
+            try:
+                os.mkdir(p)
+            except FileExistsError:
+                pass
             save_image(x, p / f"{name}.x.png", transposed=True, prefer16=True, compress=True)
             save_image(y, p / f"{name}.y.png", transposed=True, prefer16=True, compress=True)
 
@@ -179,8 +184,8 @@ class CachedHalftonePairDataset(Dataset[tuple[ndarray, ndarray]]):
         # self.save_dir = save_dir
         self.files = list(
             zip(
-                sorted(relaxed_glob_recursively(dirpath, "x.png"), key=lambda a: a.stem),
-                sorted(relaxed_glob_recursively(dirpath, "y.png"), key=lambda a: a.stem),
+                sorted(glob_recursively(dirpath, "x.png"), key=lambda a: a.stem),
+                sorted(glob_recursively(dirpath, "y.png"), key=lambda a: a.stem),
             )
         )
         if len(self.files) < 1:

@@ -13,19 +13,7 @@ from descreen.utilities.filesys import open_filepath_write
 
 def train[
     T: DescreenModel
-](
-    model: T,
-    train_data_dir: str | Path,
-    valid_data_dir: str | Path,
-    test_data_dir: str | Path,
-    output_dir: str | Path,
-    *,
-    cache_to=None,
-    from_cache=False,
-    max_epoch: int | None = None,
-    profile: str | Path | None,
-    device: torch.device,
-) -> tuple[T, int]:
+](model: T, train_data_dir: str | Path, valid_data_dir: str | Path, test_data_dir: str | Path, output_dir: str | Path, *, cache_to=None, from_cache=False, max_epoch: int | None = None, profile: str | Path | None, device: torch.device,) -> tuple[T, int]:
     exit_code = 0
 
     model.to(device)
@@ -67,7 +55,7 @@ def train[
             batch_size=batch_size,
             shuffle=True,
             drop_last=False,
-            num_workers=0,
+            num_workers=32,
             persistent_workers=False,
             pin_memory=True,
         )

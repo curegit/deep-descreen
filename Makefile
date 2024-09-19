@@ -19,10 +19,11 @@ check:
 	python3 -m mypy descreen
 
 format:
-	python3 -m black -l 200 descreen
+	python3 -m black -l 300 descreen
 
 test:
 	python3 -X dev -m descreen data/mock/wh.png --model basic
+	python3 -X dev -m descreen data/mock/wh.png --model unet
 
 testtrain:
 	python3 -X dev -m descreen.training data/mock data/mock data/mock -e 3 -m basic -p " " -d testrun

@@ -1,22 +1,9 @@
 [project]
 name = "deep-descreen"
-description = ""
-keywords = ["image processing", "halftone"]
+description = "Experimental neural network-based descreening filter for scanned Anime pictures"
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "AGPL-3.0"}
-maintainers = [
-  {name = "curegit", email = "contact@curegit.jp"}
-]
-classifiers = [
-  "Programming Language :: Python :: 3 :: Only",
-  "Environment :: GPU :: NVIDIA CUDA",
-  "Topic :: Multimedia :: Graphics :: Capture :: Scanners",
-  "Topic :: Scientific/Engineering :: Artificial Intelligence",
-  "Topic :: Scientific/Engineering :: Image Processing",
-  "License :: OSI Approved :: GNU Affero General Public License v3",
-  "Typing :: Typed",
-]
 dynamic = ["version"]
 dependencies = [
   "numpy",
@@ -29,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pip", "setuptools", "build", "twine", "mypy", "black"]
+dev = ["pip", "build", "twine", "mypy", "black"]
 
 [project.scripts]
 descreen = "descreen.cli:main"
@@ -39,7 +26,7 @@ homepage = "https://github.com/curegit/deep-descreen"
 repository = "https://github.com/curegit/deep-descreen.git"
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 78"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

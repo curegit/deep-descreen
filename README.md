@@ -1,34 +1,24 @@
 # Anime Halftone Inversing
 
-CNN solution for scanning anime prints
-
-This project is still WIP, and its codes are extremely rough.
-So they might not work properly.
+Experimental neural network-based descreening filter for scanned Anime pictures
 
 ## Aiming
 
-When you digitize paper-printed anime arts, you have to smooth halftone dots (because of offset printing).
-Usually, using filter-based methods (e.g. Gaussian blur) give undesired blurry results.
-This project solves it by using CNN (Convolutional Neural Network) which convert dotted images into smooth image.
+Scans often contain visible halftone dot patterns introduced by the printing process (e.g. offset printing).
+A common approach is to use traditional filters such as Gaussian blur, but those methods tend to soften edges and wash out fine details, resulting in an overly blurry image.
+This project explores a CNN (Convolutional Neural Network) that learns to remove halftone dots while preserving line art and texture, converting dotted scans into clean, smooth images.
 
-Here are the provisional result and comparison to the baseline (Gaussian blur).
+Below is a preliminary result, compared against a simple Gaussian-blur baseline.
 
 ![comparison](comparison.png)
 
+## Architecture
 
-## Train
+The network can process images of any size during inference phase since it is a fully
+convolutional network.
 
-###
+## Inference
 
+```sh
+python3 -m descreen INPUT.png
 ```
-python3 -m descreening.pitch.make JapanColor2011Coated.icc images pitch_dataset
-```
-
-### Select CUDA Device
-
-CUDA_VISIBLE_DEVICES
-
-
-
-network can process images of any size during testing phase since it is a fully
-convolutional network

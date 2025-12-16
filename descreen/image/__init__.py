@@ -3,6 +3,7 @@ import numpy as np
 from io import BufferedIOBase
 from pathlib import Path
 from numpy import ndarray
+from eqlm.img import embed_icc_png
 from descreen.utilities.filesys import resolve_path
 
 
@@ -49,7 +50,7 @@ def load_image(filelike: str | Path | bytes, *, transpose: bool = True, normaliz
             raise RuntimeError()
 
 
-def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16: bool = True, compress: bool = False) -> None:
+def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transposed: bool = True, prefer16: bool = True, compress: bool = False, profile: bytes | None = None) -> None:
     match img.dtype:
         case np.float32:
             if prefer16:
@@ -70,6 +71,8 @@ def save_image(img: ndarray, filelike: str | Path | BufferedIOBase, *, transpose
     if not ok:
         raise RuntimeError()
     buffer = bin.tobytes()
+    if profile is not None:
+        buffer = embed_icc_png(buffer, profile)
     match filelike:
         case str() | Path() as path:
             with open(resolve_path(path), "wb") as fp:

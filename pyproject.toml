@@ -19,15 +19,17 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-  "numpy >= 1.26.0",
+  "numpy",
   "torch >= 2.2.1",
   "safetensors >= 0.4.2",
   "opencv-python >= 4.9.0",
+  "halftone-converter >= 2.6.4",
+  "eqlm",
   "rich >= 13.0.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pip", "setuptools", "build", "twine", "mypy", "black", "halftone-converter"]
+dev = ["pip", "setuptools", "build", "twine", "mypy", "black"]
 
 [project.scripts]
 descreen = "descreen.cli:main"
